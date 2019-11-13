@@ -10,10 +10,7 @@ import org.apache.sshd.server.command.Command;
 import org.dreamwork.concurrent.Looper;
 import org.dreamwork.network.bridge.Keys;
 import org.dreamwork.network.bridge.NetworkSwitch;
-import org.dreamwork.network.bridge.cmd.AddDeviceCommand;
-import org.dreamwork.network.bridge.cmd.Shell;
-import org.dreamwork.network.bridge.cmd.ShowDeviceCommand;
-import org.dreamwork.network.bridge.cmd.Ssh;
+import org.dreamwork.network.bridge.cmd.*;
 import org.dreamwork.network.bridge.io.IoSessionInputStream;
 import org.dreamwork.network.bridge.io.IoSessionOutputStream;
 import org.dreamwork.network.bridge.io.Node;
@@ -126,6 +123,7 @@ public class MainShellCommand implements Command {
                     new Ssh (channel),
                     new AddDeviceCommand (),
                     new ShowDeviceCommand (),
+                    new NatCommand (),
                     new org.dreamwork.telnet.command.Command ("test-command", "tc", "this is a test command") {
                         @Override
                         public void perform (Console console) throws IOException {
@@ -163,6 +161,9 @@ public class MainShellCommand implements Command {
                 }
             });
             console.setCommandParser (parser);
+            for (Map.Entry<String, String> e : env.getEnv ().entrySet ()) {
+                console.setEnv (e.getKey (), e.getValue ());
+            }
             Looper.invokeLater (() -> {
                 try {
                     console.loop ();

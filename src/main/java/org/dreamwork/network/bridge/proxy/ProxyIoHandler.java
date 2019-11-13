@@ -21,7 +21,6 @@ public class ProxyIoHandler extends IoHandlerAdapter {
         OutputStream out = new IoSessionOutputStream (session);
         session.setAttribute (Keys.KEY_IN, in);
         session.setAttribute (Keys.KEY_OUT, out);
-//        session.setAttribute (Keys.IS_PROXY_TYPE, Boolean.FALSE);
         session.setAttribute (Keys.LAST_UPDATE_TIMESTAMP, System.currentTimeMillis ());
     }
 

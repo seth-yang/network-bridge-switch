@@ -2,14 +2,12 @@ package org.dreamwork.network.bridge;
 
 import org.apache.mina.core.session.IoSession;
 import org.apache.sshd.server.SshServer;
-import org.dreamwork.db.SQLite;
-import org.dreamwork.misc.AlgorithmUtil;
-import org.dreamwork.network.bridge.data.Schema;
-import org.dreamwork.network.bridge.data.User;
+import org.dreamwork.network.bridge.data.NAT;
 import org.dreamwork.network.bridge.sshd.DatabaseAuthenticator;
 import org.dreamwork.network.bridge.sshd.FileSystemHostKeyProvider;
 import org.dreamwork.network.bridge.sshd.MainShellCommand;
-import org.dreamwork.util.StringUtil;
+
+import java.util.List;
 
 /**
  * Created by seth.yang on 2019/10/28
@@ -23,19 +21,10 @@ public class NetworkSwitch {
     }
 
     private void start () throws Exception {
-        {
-            SQLite sqlite = SQLite.get ("./bridge.db");
-            Schema.registerAllSchemas ();
-            if (!sqlite.isTablePresent ("t_device")) {
-                sqlite.createSchemas ();
-                User user = new User ();
-                user.setUserName ("root");
-                user.setPassword (StringUtil.dump (AlgorithmUtil.md5 ("123456".getBytes ())).toLowerCase ());
-                sqlite.save (user);
-            }
-            Context.db = sqlite;
-        }
+        Configuration.load (null);
+        Configuration.initDatabase ();
 
+        // start the ssh server
         SshServer server = SshServer.setUpDefaultServer ();
         server.setHost ("0.0.0.0");
         server.setPort (9527);
@@ -43,6 +32,16 @@ public class NetworkSwitch {
         server.setKeyPairProvider (new FileSystemHostKeyProvider ());
         server.setShellFactory (channel -> new MainShellCommand ());
         server.start ();
+
+        // bind the NATs
+        {
+            List<NAT> list = Context.db.get (NAT.class, "auto_bind = ?", true);
+            if (list != null && !list.isEmpty ()) {
+                for (NAT nat : list) {
+                    NetBridge.transform (nat);
+                }
+            }
+        }
 
         synchronized (LOCKER) {
             LOCKER.wait ();
