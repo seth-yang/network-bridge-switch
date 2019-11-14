@@ -18,7 +18,6 @@ import org.dreamwork.network.bridge.io.Pipe;
 import org.dreamwork.telnet.ConnectionData;
 import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.SimpleCommandParser;
-import org.dreamwork.telnet.TerminalIO;
 import org.dreamwork.telnet.command.CommandParser;
 import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
@@ -124,24 +123,9 @@ public class MainShellCommand implements Command {
                     new AddDeviceCommand (),
                     new ShowDeviceCommand (),
                     new NatCommand (),
-                    new org.dreamwork.telnet.command.Command ("test-command", "tc", "this is a test command") {
-                        @Override
-                        public void perform (Console console) throws IOException {
-                            if ("aaa".equals (content)) {
-                                console.errorln ("error message");
-                            } else {
-                                console.println ("your type: " + content);
-                            }
-                            content = null;
-                        }
-
-                        @Override
-                        public void showHelp (Console console) throws IOException {
-                            console.setForegroundColor (TerminalIO.YELLOW);
-                            console.println ("this is a test help");
-                            console.setForegroundColor (TerminalIO.COLORINIT);
-                        }
-                    }
+                    new DeviceCommand (),
+                    new PasswordCommand (),
+                    new UserCommand ()
             );
             parser.registerCommand (new org.dreamwork.telnet.command.Command ("conn", null, "ssh connector") {
                 @Override

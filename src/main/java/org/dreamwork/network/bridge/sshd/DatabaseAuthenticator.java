@@ -21,7 +21,7 @@ public class DatabaseAuthenticator implements PasswordAuthenticator {
         User user = Context.db.getByPK (User.class, username);
         if (user != null) {
             try {
-                String md5 = StringUtil.dump (AlgorithmUtil.md5 ("123456".getBytes ())).toLowerCase ();
+                String md5 = StringUtil.dump (AlgorithmUtil.md5 (password.getBytes ())).toLowerCase ();
                 return md5.equals (user.getPassword ());
             } catch (Exception ex) {
                 logger.warn (ex.getMessage (), ex);
