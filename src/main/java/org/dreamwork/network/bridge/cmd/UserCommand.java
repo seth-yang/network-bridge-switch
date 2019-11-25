@@ -25,7 +25,9 @@ public class UserCommand extends Command {
 
     @Override
     public void parse (String... options) {
-        if (options.length != 2) {
+        if (options.length == 1 && ("--help".equals (options [0]) || "-h".equals (options [0]))) {
+            action = "help";
+        } else if (options.length != 2) {
             message = "invalid arguments";
         } else {
             action = options[0];
@@ -49,6 +51,11 @@ public class UserCommand extends Command {
 
             if (!StringUtil.isEmpty (message)) {
                 console.errorln (message);
+                return;
+            }
+
+            if ("help".equals (action)) {
+                showHelp (console);
                 return;
             }
 
@@ -112,6 +119,8 @@ public class UserCommand extends Command {
     public void showHelp (Console console) throws IOException {
         console.setForegroundColor (TerminalIO.YELLOW);
         console.println ("user add|del[ete] <username>");
+        console.setForegroundColor (TerminalIO.YELLOW);
+        console.println ("user -h | --help    show this list");
         console.setForegroundColor (TerminalIO.COLORINIT);
     }
 }
