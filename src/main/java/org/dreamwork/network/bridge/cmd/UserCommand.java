@@ -10,9 +10,6 @@ import org.dreamwork.util.StringUtil;
 
 import java.io.IOException;
 
-import static org.dreamwork.network.bridge.cmd.CommandUtil.option;
-import static org.dreamwork.network.bridge.cmd.CommandUtil.readPassword;
-
 /**
  * Created by seth.yang on 2019/11/14
  */
@@ -72,7 +69,7 @@ public class UserCommand extends Command {
                         return;
                     }
 
-                    String password = readPassword (console);
+                    String password = console.readPassword ();
                     if (StringUtil.isEmpty (password)) {
                         return;
                     }
@@ -89,7 +86,7 @@ public class UserCommand extends Command {
                 case "del":
                 case "delete":
                     if (user != null) {
-                        Boolean answer = option ("Are you sure to delete the user", false, console);
+                        Boolean answer = console.option ("Are you sure to delete the user", false);
                         if (answer != null && answer) {
                             Context.db.delete (user);
                             console.setForegroundColor (TerminalIO.GREEN);

@@ -25,7 +25,7 @@ class Configuration {
         if (!StringUtil.isEmpty (path)) {
             Path p = Paths.get (path);
             if (Files.exists (p) && Files.isRegularFile (p) && Files.isReadable (p)) {
-                try (InputStream in = Files.newInputStream (Paths.get ("./network-bridge.conf"))) {
+                try (InputStream in = Files.newInputStream (Paths.get (path))) {
                     props.load (in);
                 }
             }

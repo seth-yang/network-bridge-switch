@@ -235,11 +235,11 @@ public class NetBridge {
         public void messageReceived (IoSession session, Object message) {
             this.session = session;
             IoSession peer = (IoSession) session.getAttribute ("peer");
-            IoBuffer buff = (IoBuffer) message;
-            byte[] data = new byte[buff.limit ()];
-            buff.get (data);
 
             if (peer != null) {
+                IoBuffer buff = (IoBuffer) message;
+                byte[] data = new byte[buff.limit ()];
+                buff.get (data);
                 peer.write (IoBuffer.wrap (data));
             }
         }

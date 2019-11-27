@@ -7,7 +7,6 @@ import org.dreamwork.network.bridge.Keys;
 import org.dreamwork.network.bridge.io.IoSessionInputStream;
 import org.dreamwork.network.bridge.io.IoSessionOutputStream;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -24,7 +23,7 @@ public class ProxyIoHandler extends IoHandlerAdapter {
         session.setAttribute (Keys.LAST_UPDATE_TIMESTAMP, System.currentTimeMillis ());
     }
 
-    public void sessionCreated (IoSession session) throws Exception {
+    public void sessionCreated (IoSession session) {
         if (session.isReadSuspended() || session.isWriteSuspended()) {
             session.resumeRead();
             session.resumeWrite();
@@ -37,36 +36,12 @@ public class ProxyIoHandler extends IoHandlerAdapter {
 
     public void messageReceived(IoSession session, Object message) throws Exception {
         session.setAttribute (Keys.LAST_UPDATE_TIMESTAMP, System.currentTimeMillis ());
-        Boolean isProxyType = (Boolean) session.getAttribute (Keys.IS_PROXY_TYPE);
-//        Boolean isProxySsh = (Boolean) session.getAttribute("IS_PROXY_SSH");
-
-        if (isProxyType == null || !isProxyType) {
+        IoSession peer = (IoSession) session.getAttribute (Keys.KEY_PEER);
+        if (peer != null) {
+            peer.write (message);
+        } else {
             IoSessionInputStream in = (IoSessionInputStream) session.getAttribute(Keys.KEY_IN);
             in.write((IoBuffer) message);
-        } else {
-            infiltrate(session, message);
-        }
-/*
-
-        // proxy跳转ssh方式登录设备
-        if (isProxySsh != null && isProxySsh) {
-            if (session.getAttribute("") != null) {
-                IoSession proxy = (IoSession) session.getAttribute("");
-                proxy.write(message);
-            }
-        }
-*/
-    }
-
-    protected void infiltrate(IoSession session, Object message) throws IOException {
-        if (session.getAttribute("peer") != null) {
-            IoBuffer rb = (IoBuffer) message;
-            IoBuffer wb = IoBuffer.allocate(rb.remaining ());
-            rb.mark ();
-            wb.put (rb);
-            wb.flip ();
-            ((IoSession) session.getAttribute("peer")).write (wb);
-            rb.reset ();
         }
     }
 }
