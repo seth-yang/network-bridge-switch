@@ -25,7 +25,8 @@ import static java.nio.file.StandardOpenOption.*;
  * Created by seth.yang on 2019/11/1
  */
 public class FileSystemHostKeyProvider extends SimpleGeneratorHostKeyProvider {
-    private final static Path path = Paths.get (System.getProperty ("user.home"), ".ssh-server", "known-hosts");
+    private static Path path;
+//            = Paths.get (System.getProperty ("user.home"), ".ssh-server", "known-hosts");
 
     private final static Map<String, KeyPair> pairs = new TreeMap<> ();
     private final static List<KeyPair> cached_pairs = Collections.synchronizedList (new ArrayList<> ());
@@ -33,6 +34,22 @@ public class FileSystemHostKeyProvider extends SimpleGeneratorHostKeyProvider {
     private final static String LOOPER_NAME = "KEY_WRITER";
 
     static {
+        Looper.create (LOOPER_NAME, 16);
+    }
+
+    private static PrivateKey readPrivateKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec (buff);
+        KeyFactory factory = KeyFactory.getInstance ("RSA");
+        return factory.generatePrivate (spec);
+    }
+
+    private static PublicKey readPublicKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        X509EncodedKeySpec spec = new X509EncodedKeySpec (buff);
+        KeyFactory factory = KeyFactory.getInstance ("RSA");
+        return factory.generatePublic (spec);
+    }
+
+    private synchronized static void init () {
         if (Files.exists (path, LinkOption.NOFOLLOW_LINKS)) {
             try (InputStream in = Files.newInputStream (path, StandardOpenOption.READ)) {
                 BufferedReader reader = new BufferedReader (new InputStreamReader (in, StandardCharsets.UTF_8));
@@ -81,20 +98,16 @@ public class FileSystemHostKeyProvider extends SimpleGeneratorHostKeyProvider {
                 throw new RuntimeException (ex);
             }
         }
-
-        Looper.create (LOOPER_NAME, 16);
     }
 
-    private static PrivateKey readPrivateKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec (buff);
-        KeyFactory factory = KeyFactory.getInstance ("RSA");
-        return factory.generatePrivate (spec);
-    }
+    public FileSystemHostKeyProvider (String dir) {
+        synchronized (LOOPER_NAME) {
+            if (path == null) {
+                path = Paths.get (dir);
 
-    private static PublicKey readPublicKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        X509EncodedKeySpec spec = new X509EncodedKeySpec (buff);
-        KeyFactory factory = KeyFactory.getInstance ("RSA");
-        return factory.generatePublic (spec);
+                init ();
+            }
+        }
     }
 
     private synchronized static void write () {

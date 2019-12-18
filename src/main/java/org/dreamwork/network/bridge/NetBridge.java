@@ -27,10 +27,12 @@ public class NetBridge {
 
     private static final Logger logger = LoggerFactory.getLogger (NetBridge.class);
 
+/*
     public static void main (String[] args) throws Exception {
         Configuration.load (null);
         Configuration.initDatabase ();
     }
+*/
 
 /*
     private static void test (String... args) throws IOException {

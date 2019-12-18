@@ -125,7 +125,8 @@ public class MainShellCommand implements Command {
                     new NatCommand (),
                     new DeviceCommand (),
                     new PasswordCommand (),
-                    new UserCommand ()
+                    new UserCommand (),
+                    new TunnelCommand ()
             );
             parser.registerCommand (new org.dreamwork.telnet.command.Command ("conn", null, "ssh connector") {
                 @Override

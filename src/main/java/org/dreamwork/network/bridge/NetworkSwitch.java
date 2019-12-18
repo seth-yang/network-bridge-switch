@@ -4,19 +4,35 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.mina.core.session.IoSession;
 import org.apache.sshd.server.SshServer;
 import org.dreamwork.cli.ArgumentParser;
+import org.dreamwork.cli.CommandLineHelper;
+import org.dreamwork.config.IConfiguration;
+import org.dreamwork.config.PropertyConfiguration;
+import org.dreamwork.db.SQLite;
+import org.dreamwork.misc.AlgorithmUtil;
 import org.dreamwork.network.bridge.data.NAT;
+import org.dreamwork.network.bridge.data.Schema;
+import org.dreamwork.network.bridge.data.User;
 import org.dreamwork.network.bridge.sshd.DatabaseAuthenticator;
 import org.dreamwork.network.bridge.sshd.FileSystemHostKeyProvider;
 import org.dreamwork.network.bridge.sshd.MainShellCommand;
+import org.dreamwork.util.FileInfo;
 import org.dreamwork.util.IOUtil;
 import org.dreamwork.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
+
+import static org.dreamwork.network.bridge.Keys.*;
 
 /**
  * Created by seth.yang on 2019/10/28
@@ -25,37 +41,104 @@ public class NetworkSwitch {
     private static final Object LOCKER = new byte[0];
     public static final IoSession[] CACHE = new IoSession[1];
 
+    private Logger logger;
+
     public static void main (String[] args) throws Exception {
         ClassLoader loader = NetworkSwitch.class.getClassLoader ();
-        ArgumentParser parser;
-        try (InputStream in = loader.getResourceAsStream ("network-bridge.json")) {
-            if (in != null) {
-                byte[] buff = IOUtil.read (in);
-                String content = new String (buff, StandardCharsets.UTF_8);
-                parser = new ArgumentParser (content);
+        IConfiguration conf;
+        {
+            ArgumentParser parser;
+            try (InputStream in = loader.getResourceAsStream ("network-bridge.json")) {
+                if (in != null) {
+                    byte[] buff = IOUtil.read (in);
+                    String content = new String (buff, StandardCharsets.UTF_8);
+                    parser = new ArgumentParser (content);
+                } else {
+                    throw new IllegalArgumentException ("can not find command schema!");
+                }
+            }
+
+            parser.parse (args);
+            String configFile = null;
+            if (parser.isArgPresent ('c')) {
+                configFile = parser.getValue ('c');
+            }
+            if (StringUtil.isEmpty (configFile)) {
+                configFile = parser.getDefaultValue ('c');
+            }
+            if (StringUtil.isEmpty (configFile)) {
+                configFile = "../conf/network-bridge.conf";
+            }
+
+            Properties props;
+            if (Files.exists (Paths.get (configFile))) {
+                props = CommandLineHelper.parseConfig (configFile);
             } else {
-                throw new IllegalArgumentException ("can not find command schema!");
+                System.err.println ("Cant find config file: " + configFile + ", using default settings.");
+                props = new Properties ();
+            }
+            PropertyConfiguration pc = new PropertyConfiguration (props);
+            merge (pc, parser);
+            Context.conf = conf = pc;
+
+            if (parser.isArgPresent ('v') || "trace".equalsIgnoreCase (pc.getString (CFG_LOG_LEVEL))) {
+                pc.prettyShow ();
             }
         }
 
-        parser.parse (args);
-        initLogger (loader, parser);
+        String logFile  = conf.getString (CFG_LOG_FILE);
+        String logLevel = conf.getString (CFG_LOG_LEVEL);
+        Properties props = CommandLineHelper.initLogger (loader, logLevel, logFile, "org.dreamwork");
+        PropertyConfigurator.configure (props);
 
-        new NetworkSwitch ().start (parser);
+        new NetworkSwitch ().start (conf);
     }
 
-    private void start (ArgumentParser parser) throws Exception {
-        Configuration.load (null);
-        Configuration.initDatabase ();
+    private NetworkSwitch () {
+        logger = LoggerFactory.getLogger (NetworkSwitch.class);
+    }
+
+    private void start (IConfiguration conf) throws Exception {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("initialing the database ...");
+        }
+        initDatabase (conf.getString (CFG_DB_FILE));
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("the database initialed.\r\n");
+            logger.trace ("starting the sshd server ...");
+        }
+
+        String ext = conf.getString (CFG_EXT_DIR);
+        if (Files.exists (Paths.get (ext))) {
+            Files.list (Paths.get (ext))
+                    .filter (path -> path.toString ().endsWith (".conf"))
+                    .forEach (path -> {
+                        Properties props = new Properties ();
+                        try (InputStream in = Files.newInputStream (path)) {
+                            props.load (in);
+                            PropertyConfiguration pc = new PropertyConfiguration (props);
+                            String name = path.getFileName ().toString ();
+                            name = FileInfo.getFileNameWithoutExtension (name);
+                            Context.configs.put (name, pc);
+                        } catch (IOException ex) {
+                            ex.printStackTrace ();
+                        }
+                    });
+        }
 
         // start the ssh server
+        int port = conf.getInt (CFG_SSHD_PORT, 9527);
         SshServer server = SshServer.setUpDefaultServer ();
         server.setHost ("0.0.0.0");
-        server.setPort (9527);
+        server.setPort (port);
         server.setPasswordAuthenticator (new DatabaseAuthenticator ());
-        server.setKeyPairProvider (new FileSystemHostKeyProvider ());
+        server.setKeyPairProvider (new FileSystemHostKeyProvider (conf.getString (CFG_SSHD_CA_DIR)));
         server.setShellFactory (channel -> new MainShellCommand ());
         server.start ();
+
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("sshd server listen on {}:{}", server.getHost (), port);
+        }
 
         // bind the NATs
         {
@@ -72,44 +155,74 @@ public class NetworkSwitch {
         }
     }
 
-    private static void initLogger (ClassLoader loader, ArgumentParser parser) throws IOException {
-        String logLevel, logFile;
+    private static void merge (PropertyConfiguration conf, ArgumentParser parser) {
+        if (parser.isArgPresent ('e')) {
+            String ext_dir = parser.getValue ('e');
+            conf.setRawProperty (CFG_EXT_DIR, ext_dir);
+        }
+        if (!conf.contains (CFG_EXT_DIR)) {
+            conf.setRawProperty (CFG_EXT_DIR, parser.getDefaultValue ('e'));
+        }
+
+        if (parser.isArgPresent ('d')) {
+            String db_file = parser.getValue ('d');
+            conf.setRawProperty (CFG_DB_FILE, db_file);
+        }
+        if (!conf.contains (CFG_DB_FILE)) {
+            conf.setRawProperty (CFG_DB_FILE, parser.getDefaultValue ('d'));
+        }
+
+        if (parser.isArgPresent ("log-file")) {
+            conf.setRawProperty (CFG_LOG_FILE, parser.getValue ("log-file"));
+        }
+        if (!conf.contains (CFG_LOG_FILE)) {
+            conf.setRawProperty (CFG_LOG_FILE, parser.getDefaultValue ("log-file"));
+        }
+
         if (parser.isArgPresent ('v')) {
-            logLevel = "TRACE";
+            conf.setRawProperty (CFG_LOG_LEVEL, "trace");
         } else if (parser.isArgPresent ("log-level")) {
-            logLevel = parser.getValue ("log-level");
-        } else {
-            logLevel = parser.getDefaultValue ("log-level");
+            conf.setRawProperty (CFG_LOG_LEVEL, parser.getValue ("log-level"));
+        }
+        if (!conf.contains (CFG_LOG_LEVEL)) {
+            conf.setRawProperty (CFG_LOG_LEVEL, parser.getDefaultValue ("log-level"));
         }
 
-        logFile = parser.getValue ("log-file");
-        if (StringUtil.isEmpty (logFile)) {
-            logFile = parser.getDefaultValue ("log-file");
+        if (parser.isArgPresent ('p')) {
+            conf.setRawProperty (CFG_SSHD_PORT, parser.getValue ('p'));
         }
-        File file = new File (logFile);
-        File parent = file.getParentFile ();
-        if (!parent.exists () && !parent.mkdirs ()) {
-            throw new IOException ("Can't create dir: " + parent.getCanonicalPath ());
+        if (!conf.contains (CFG_SSHD_PORT)) {
+            conf.setRawProperty (CFG_SSHD_PORT, parser.getDefaultValue ('p'));
         }
 
-        try (InputStream in = loader.getResourceAsStream ("internal-log4j.properties")) {
-            Properties props = new Properties ();
-            props.load (in);
-
-            System.out.println ("### setting log level to " + logLevel + " ###");
-            if ("trace".equalsIgnoreCase (logLevel)) {
-                props.setProperty ("log4j.rootLogger", "INFO, stdout, FILE");
-                props.setProperty ("log4j.appender.FILE.File", logFile);
-                props.setProperty ("log4j.appender.FILE.Threshold", logLevel);
-                props.setProperty ("log4j.logger.org.dreamwork", "trace");
-                props.setProperty ("log4j.logger.com.hothink", "trace");
-            } else {
-                props.setProperty ("log4j.rootLogger", logLevel + ", stdout, FILE");
-                props.setProperty ("log4j.appender.FILE.File", logFile);
-                props.setProperty ("log4j.appender.FILE.Threshold", logLevel);
-            }
-
-            PropertyConfigurator.configure (props);
+        if (parser.isArgPresent ("ca-dir")) {
+            conf.setRawProperty (CFG_SSHD_CA_DIR, parser.getValue ("ca-dir"));
         }
+        if (!conf.contains (CFG_SSHD_CA_DIR)) {
+            conf.setRawProperty (CFG_SSHD_CA_DIR, parser.getDefaultValue ("ca-dir"));
+        }
+    }
+
+    private void initDatabase (String file) throws SQLException, NoSuchAlgorithmException, IOException {
+        File db  = new File (file);
+        File dir = db.getParentFile ();
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("trying to create/get the database from: {}", db.getCanonicalPath ());
+        }
+        if (!dir.exists () && !dir.mkdirs ()) {
+            logger.error ("can't create dir: {}", dir.getCanonicalPath ());
+            System.exit (-1);
+            return;
+        }
+        SQLite sqlite = SQLite.get (file);
+        Schema.registerAllSchemas ();
+        if (!sqlite.isTablePresent ("t_device")) {
+            sqlite.createSchemas ();
+            User user = new User ();
+            user.setUserName ("root");
+            user.setPassword (StringUtil.dump (AlgorithmUtil.md5 ("123456".getBytes ())).toLowerCase ());
+            sqlite.save (user);
+        }
+        Context.db = sqlite;
     }
 }

@@ -12,4 +12,11 @@ public interface Keys {
     String KEY_PEER                 = PACKET_NAME + "KEY_PEER";
     String IS_PROXY_TYPE            = PACKET_NAME + "IS_PROXY_TYPE";
     String LAST_UPDATE_TIMESTAMP    = PACKET_NAME + "LAST_UPDATE_TIMESTAMP";
+
+    String CFG_EXT_DIR              = "ext.conf.dir";
+    String CFG_DB_FILE              = "database.file";
+    String CFG_LOG_FILE             = "log.file";
+    String CFG_LOG_LEVEL            = "log.level";
+    String CFG_SSHD_PORT            = "service.sshd.port";
+    String CFG_SSHD_CA_DIR          = "service.sshd.cert.file";
 }
