@@ -9,7 +9,7 @@ import org.apache.sshd.common.channel.PtyChannelConfiguration;
 import org.apache.sshd.common.util.io.NoCloseInputStream;
 import org.apache.sshd.common.util.io.NoCloseOutputStream;
 import org.apache.sshd.server.channel.ChannelSession;
-import org.dreamwork.network.bridge.Keys;
+import org.dreamwork.network.Keys;
 import org.dreamwork.telnet.Console;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge;
+package org.dreamwork.network;
 
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.mina.core.session.IoSession;
@@ -9,12 +9,13 @@ import org.dreamwork.config.IConfiguration;
 import org.dreamwork.config.PropertyConfiguration;
 import org.dreamwork.db.SQLite;
 import org.dreamwork.misc.AlgorithmUtil;
-import org.dreamwork.network.bridge.data.NAT;
-import org.dreamwork.network.bridge.data.Schema;
-import org.dreamwork.network.bridge.data.User;
-import org.dreamwork.network.bridge.sshd.DatabaseAuthenticator;
-import org.dreamwork.network.bridge.sshd.FileSystemHostKeyProvider;
-import org.dreamwork.network.bridge.sshd.MainShellCommand;
+import org.dreamwork.network.bridge.NetBridge;
+import org.dreamwork.network.sshd.data.NAT;
+import org.dreamwork.network.sshd.data.Schema;
+import org.dreamwork.network.sshd.data.User;
+import org.dreamwork.network.sshd.DatabaseAuthenticator;
+import org.dreamwork.network.sshd.FileSystemHostKeyProvider;
+import org.dreamwork.network.sshd.MainShellCommand;
 import org.dreamwork.util.FileInfo;
 import org.dreamwork.util.IOUtil;
 import org.dreamwork.util.StringUtil;
@@ -32,7 +33,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import static org.dreamwork.network.bridge.Keys.*;
+import static org.dreamwork.network.Keys.*;
 
 /**
  * Created by seth.yang on 2019/10/28

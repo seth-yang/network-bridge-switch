@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.data.schema;
+package org.dreamwork.network.sshd.data.schema;
 
 import org.dreamwork.persistence.*;
 

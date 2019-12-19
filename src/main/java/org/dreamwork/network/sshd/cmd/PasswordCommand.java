@@ -1,8 +1,8 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.misc.AlgorithmUtil;
-import org.dreamwork.network.bridge.Context;
-import org.dreamwork.network.bridge.data.User;
+import org.dreamwork.network.Context;
+import org.dreamwork.network.sshd.data.User;
 import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.TerminalIO;
 import org.dreamwork.telnet.command.Command;
@@ -10,7 +10,7 @@ import org.dreamwork.util.StringUtil;
 
 import java.io.IOException;
 
-import static org.dreamwork.network.bridge.cmd.CommandUtil.readPassword;
+import static org.dreamwork.network.sshd.cmd.CommandUtil.readPassword;
 
 /**
  * Created by seth.yang on 2019/11/14

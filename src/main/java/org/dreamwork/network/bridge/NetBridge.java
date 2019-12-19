@@ -8,7 +8,7 @@ import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.SocketConnector;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
-import org.dreamwork.network.bridge.data.NAT;
+import org.dreamwork.network.sshd.data.NAT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

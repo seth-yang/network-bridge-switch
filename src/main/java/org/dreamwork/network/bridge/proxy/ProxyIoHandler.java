@@ -3,7 +3,7 @@ package org.dreamwork.network.bridge.proxy;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
-import org.dreamwork.network.bridge.Keys;
+import org.dreamwork.network.Keys;
 import org.dreamwork.network.bridge.io.IoSessionInputStream;
 import org.dreamwork.network.bridge.io.IoSessionOutputStream;
 

@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge;
+package org.dreamwork.network;
 
 /**
  * Created by seth.yang on 2019/11/1

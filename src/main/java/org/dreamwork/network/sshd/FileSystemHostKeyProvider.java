@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.sshd;
+package org.dreamwork.network.sshd;
 
 import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;

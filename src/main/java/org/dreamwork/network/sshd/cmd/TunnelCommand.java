@@ -1,9 +1,9 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.cli.text.Alignment;
 import org.dreamwork.cli.text.TextFormater;
 import org.dreamwork.config.IConfiguration;
-import org.dreamwork.network.bridge.Context;
+import org.dreamwork.network.Context;
 import org.dreamwork.network.bridge.tunnel.Client;
 import org.dreamwork.network.bridge.tunnel.TunnelManager;
 import org.dreamwork.telnet.Console;

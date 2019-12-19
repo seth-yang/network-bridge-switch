@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.cli.text.TextFormater;
 import org.dreamwork.config.KeyValuePair;
@@ -9,7 +9,7 @@ import org.dreamwork.util.StringUtil;
 
 import java.io.IOException;
 
-import static org.dreamwork.network.bridge.cmd.CommandUtil.readPassword;
+import static org.dreamwork.network.sshd.cmd.CommandUtil.readPassword;
 
 /**
  * Created by seth.yang on 2019/11/14

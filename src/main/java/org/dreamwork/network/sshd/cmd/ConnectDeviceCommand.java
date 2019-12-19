@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.apache.sshd.server.channel.ChannelSession;
 import org.dreamwork.telnet.Console;

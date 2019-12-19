@@ -1,10 +1,10 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.cli.text.Alignment;
 import org.dreamwork.cli.text.TextFormater;
-import org.dreamwork.network.bridge.Context;
+import org.dreamwork.network.Context;
 import org.dreamwork.network.bridge.NetBridge;
-import org.dreamwork.network.bridge.data.NAT;
+import org.dreamwork.network.sshd.data.NAT;
 import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.TerminalIO;
 import org.dreamwork.telnet.command.Command;

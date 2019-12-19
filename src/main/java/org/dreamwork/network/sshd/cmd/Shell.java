@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.apache.sshd.common.channel.PtyMode;
 import org.apache.sshd.common.session.Session;
@@ -9,7 +9,7 @@ import org.apache.sshd.server.channel.PuttyRequestHandler;
 import org.apache.sshd.server.shell.TtyFilterInputStream;
 import org.apache.sshd.server.shell.TtyFilterOutputStream;
 import org.dreamwork.concurrent.Looper;
-import org.dreamwork.network.bridge.Keys;
+import org.dreamwork.network.Keys;
 import org.dreamwork.network.bridge.io.Node;
 import org.dreamwork.network.bridge.io.Pipe;
 import org.dreamwork.telnet.Console;

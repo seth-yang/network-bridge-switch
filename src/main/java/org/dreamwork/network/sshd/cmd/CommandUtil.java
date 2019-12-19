@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.cmd;
+package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.telnet.Console;
 import org.dreamwork.util.StringUtil;

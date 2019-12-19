@@ -1,12 +1,12 @@
-package org.dreamwork.network.bridge.sshd;
+package org.dreamwork.network.sshd;
 
 import org.apache.sshd.server.auth.AsyncAuthException;
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.apache.sshd.server.auth.password.PasswordChangeRequiredException;
 import org.apache.sshd.server.session.ServerSession;
 import org.dreamwork.misc.AlgorithmUtil;
-import org.dreamwork.network.bridge.Context;
-import org.dreamwork.network.bridge.data.User;
+import org.dreamwork.network.Context;
+import org.dreamwork.network.sshd.data.User;
 import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

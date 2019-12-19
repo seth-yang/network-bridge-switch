@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge.sshd;
+package org.dreamwork.network.sshd;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -8,9 +8,9 @@ import org.apache.sshd.server.Signal;
 import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.dreamwork.concurrent.Looper;
-import org.dreamwork.network.bridge.Keys;
-import org.dreamwork.network.bridge.NetworkSwitch;
-import org.dreamwork.network.bridge.cmd.*;
+import org.dreamwork.network.Keys;
+import org.dreamwork.network.NetworkSwitch;
+import org.dreamwork.network.sshd.cmd.*;
 import org.dreamwork.network.bridge.io.IoSessionInputStream;
 import org.dreamwork.network.bridge.io.IoSessionOutputStream;
 import org.dreamwork.network.bridge.io.Node;

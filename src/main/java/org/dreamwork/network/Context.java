@@ -1,4 +1,4 @@
-package org.dreamwork.network.bridge;
+package org.dreamwork.network;
 
 import org.dreamwork.config.IConfiguration;
 import org.dreamwork.db.SQLite;

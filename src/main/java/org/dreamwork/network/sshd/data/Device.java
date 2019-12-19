@@ -1,6 +1,6 @@
-package org.dreamwork.network.bridge.data;
+package org.dreamwork.network.sshd.data;
 
-import org.dreamwork.network.bridge.data.schema.DeviceSchema;
+import org.dreamwork.network.sshd.data.schema.DeviceSchema;
 import org.dreamwork.persistence.*;
 
 @ISchema (DeviceSchema.class)
