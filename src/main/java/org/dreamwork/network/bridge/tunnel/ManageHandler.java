@@ -61,6 +61,7 @@ public class ManageHandler extends IoHandlerAdapter {
                 IoSession peer = managed_sessions.get (client.port);
                 peer.closeNow ();
                 managed_sessions.remove (client.port);
+                clients.remove (client.name);
 
                 client.acceptor.unbind ();
             }
