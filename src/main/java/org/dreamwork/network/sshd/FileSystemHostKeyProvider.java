@@ -4,6 +4,7 @@ import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.dreamwork.concurrent.Looper;
 import org.dreamwork.misc.Base64;
+import org.dreamwork.network.cert.KeyTool;
 import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,12 +15,11 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 import static java.nio.file.StandardOpenOption.*;
+import static org.dreamwork.network.cert.KeyTool.readPrivateKey;
+import static org.dreamwork.network.cert.KeyTool.readPublicKey;
 
 /**
  * Created by seth.yang on 2019/11/1
@@ -35,18 +35,6 @@ public class FileSystemHostKeyProvider extends SimpleGeneratorHostKeyProvider {
 
     static {
         Looper.create (LOOPER_NAME, 16);
-    }
-
-    private static PrivateKey readPrivateKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec (buff);
-        KeyFactory factory = KeyFactory.getInstance ("RSA");
-        return factory.generatePrivate (spec);
-    }
-
-    private static PublicKey readPublicKey (byte[] buff) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        X509EncodedKeySpec spec = new X509EncodedKeySpec (buff);
-        KeyFactory factory = KeyFactory.getInstance ("RSA");
-        return factory.generatePublic (spec);
     }
 
     private synchronized static void init () {
@@ -175,15 +163,7 @@ public class FileSystemHostKeyProvider extends SimpleGeneratorHostKeyProvider {
         }
 
         if (!pairs.containsKey (name)) {
-            pairs.computeIfAbsent (name, key -> {
-                try {
-                    KeyPairGenerator g = KeyPairGenerator.getInstance ("RSA");
-                    return g.generateKeyPair ();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace ();
-                }
-                return null;
-            });
+            pairs.computeIfAbsent (name, key -> KeyTool.createKeyPair ());
             Looper.runInLoop (LOOPER_NAME, FileSystemHostKeyProvider::write);
             cached_pairs.clear ();
             cached_pairs.addAll (pairs.values ());

@@ -9,9 +9,12 @@ import org.dreamwork.config.IConfiguration;
 import org.dreamwork.config.PropertyConfiguration;
 import org.dreamwork.db.SQLite;
 import org.dreamwork.misc.AlgorithmUtil;
+import org.dreamwork.misc.Base64;
 import org.dreamwork.network.bridge.NetBridge;
+import org.dreamwork.network.cert.KeyTool;
 import org.dreamwork.network.sshd.data.NAT;
 import org.dreamwork.network.sshd.data.Schema;
+import org.dreamwork.network.sshd.data.SystemConfig;
 import org.dreamwork.network.sshd.data.User;
 import org.dreamwork.network.sshd.DatabaseAuthenticator;
 import org.dreamwork.network.sshd.FileSystemHostKeyProvider;
@@ -28,8 +31,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -218,12 +225,40 @@ public class NetworkSwitch {
         SQLite sqlite = SQLite.get (file);
         Schema.registerAllSchemas ();
         if (!sqlite.isTablePresent ("t_device")) {
+            if (logger.isTraceEnabled ()) {
+                logger.trace ("creating tables ...");
+            }
             sqlite.createSchemas ();
+
+            if (logger.isTraceEnabled ()) {
+                logger.trace ("creating root user ...");
+            }
             User user = new User ();
             user.setUserName ("root");
             user.setPassword (StringUtil.dump (AlgorithmUtil.md5 ("123456".getBytes ())).toLowerCase ());
             sqlite.save (user);
+
+            initRootCA (sqlite);
         }
         Context.db = sqlite;
+    }
+
+    private void initRootCA (SQLite sqlite) {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("creating root CA");
+        }
+        KeyPair pair = KeyTool.createKeyPair ();
+        PrivateKey pri = pair.getPrivate ();
+        PublicKey  pub = pair.getPublic ();
+
+        SystemConfig sc_private_key = new SystemConfig ();
+        sc_private_key.setId (SYS_CONFIG.CFG_PRIMARY_KEY);
+        sc_private_key.setValue (new String (Base64.encode (pri.getEncoded ())));
+
+        SystemConfig sc_public_key  = new SystemConfig ();
+        sc_public_key.setId (SYS_CONFIG.CFG_PUBLIC_KEY);
+        sc_public_key.setValue (new String (Base64.encode (pub.getEncoded ())));
+
+        sqlite.save (Arrays.asList (sc_private_key, sc_public_key));
     }
 }

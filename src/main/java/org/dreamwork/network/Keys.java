@@ -19,4 +19,9 @@ public interface Keys {
     String CFG_LOG_LEVEL            = "log.level";
     String CFG_SSHD_PORT            = "service.sshd.port";
     String CFG_SSHD_CA_DIR          = "service.sshd.cert.file";
+
+    interface SYS_CONFIG {
+        String CFG_PRIMARY_KEY      = PACKET_NAME + "config.CFG_PRIMARY_KEY";
+        String CFG_PUBLIC_KEY       = PACKET_NAME + "config.CFG_PUBLIC_KEY";
+    }
 }

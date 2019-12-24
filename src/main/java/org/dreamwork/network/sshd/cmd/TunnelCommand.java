@@ -6,6 +6,7 @@ import org.dreamwork.config.IConfiguration;
 import org.dreamwork.network.Context;
 import org.dreamwork.network.bridge.tunnel.Client;
 import org.dreamwork.network.bridge.tunnel.TunnelManager;
+import org.dreamwork.network.sshd.data.TunnelClient;
 import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.TerminalIO;
 import org.dreamwork.telnet.command.Command;
@@ -19,7 +20,8 @@ import java.util.List;
  */
 public class TunnelCommand extends Command {
     private String action = "list", message;
-    private int    port   = 0;
+    private String name;
+//    private int    port   = 0;
 
     public TunnelCommand () {
         super ("tunnel", null, "tunnel manager command");
@@ -31,22 +33,15 @@ public class TunnelCommand extends Command {
             action = options[0];
         }
 
-        if (options.length > 1) {
-            String s_index = options[1];
-            try {
-                port = Integer.parseInt (s_index);
-            } catch (Exception ex) {
-                message = "invalid number format: " + s_index;
-            }
-        }
-
         if ("-h".equals (action) || "--help".equals (action)) {
             action = "help";
         }
 
-        if ("allow".equals (action) || "deny".equals (action)) {
-            if (port <= 0) {
-                message = "missing port";
+        if ("auth".equals (action)) {
+            if (options.length > 1) {
+                name = options [1];
+            } else {
+                message = "name is missing";
             }
         }
     }
@@ -70,6 +65,9 @@ public class TunnelCommand extends Command {
                     break;
                 case "list":
                     list (console);
+                    break;
+                case "auth":
+                    auth (console);
                     break;
                 case "start":
                     IConfiguration conf = Context.configs.get ("tunnel");
@@ -101,17 +99,22 @@ public class TunnelCommand extends Command {
                 "\r\n" +
                 "tunnel -h|--help          show this help list\r\n" +
                 "tunnel [list]             show all active tunnels\r\n" +
+                "tunnel auth <name>        authenticate a client and generate a unique key for it\r\n" +
                 "tunnel start              start the tunnel service\r\n" +
-                "tunnel stop               stop the tunnel service\r\n" +
+                "tunnel stop               stop the tunnel service"
+/*
                 "tunnel allow <port>       allow creating a tunnel on port\r\n" +
-                "tunnel deny <port>        deny a port to create tunnel");
+                "tunnel deny <port>        deny a port to create tunnel"
+*/
+        );
         console.setForegroundColor (TerminalIO.COLORINIT);
     }
 
     private void resetOptions () {
         action  = "list";
         message = null;
-        port    = 0;
+        name    = null;
+//        port    = 0;
     }
 
     private void list (Console console) throws IOException {
@@ -141,5 +144,26 @@ public class TunnelCommand extends Command {
             console.write ("  ");
             console.println (c.blocked ? "Y" : "");
         }
+    }
+
+    private void auth (Console console) throws IOException {
+        String password;
+        int count = 0;
+        do {
+            password = console.readPassword ();
+            if (!StringUtil.isEmpty (password) && password.trim ().length () >= 6) {
+                break;
+            }
+        } while (count ++ < 3);
+
+        if (StringUtil.isEmpty (password)) {
+            console.errorln ("no client will be authenticated without password");
+            return;
+        }
+
+        TunnelClient tc = new TunnelClient ();
+        tc.setName (name);
+        tc.setPassword (password);
+
     }
 }
