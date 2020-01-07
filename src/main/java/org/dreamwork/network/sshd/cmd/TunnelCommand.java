@@ -70,7 +70,7 @@ public class TunnelCommand extends Command {
                     auth (console);
                     break;
                 case "start":
-                    IConfiguration conf = Context.configs.get ("tunnel");
+                    IConfiguration conf = Context.getConfiguration ("tunnel");
                     int manage_port = conf.getInt ("tunnel.manage.port", 50041);
                     int tunnel_port = conf.getInt ("tunnel.connector.port", 50042);
                     TunnelManager.start (manage_port, tunnel_port);

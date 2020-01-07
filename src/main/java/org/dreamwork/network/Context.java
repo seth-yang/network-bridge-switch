@@ -1,5 +1,6 @@
 package org.dreamwork.network;
 
+import org.dreamwork.app.bootloader.ApplicationBootloader;
 import org.dreamwork.config.IConfiguration;
 import org.dreamwork.db.SQLite;
 import org.dreamwork.network.sshd.data.SystemConfig;
@@ -23,5 +24,9 @@ public class Context {
 
         SystemConfig config = db.getByPK (SystemConfig.class, key);
         return config == null ? null : config.getValue ();
+    }
+
+    public static IConfiguration getConfiguration (String name) {
+        return ApplicationBootloader.getConfiguration (name);
     }
 }

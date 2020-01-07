@@ -11,7 +11,8 @@
         "longOption": "database-file",
         "description": "the sqlite file location",
         "requireValue": true,
-        "defaultValue": "../database/bridge.db"
+        "defaultValue": "../database/bridge.db",
+        "propKey": "database.file"
     },
     {
         "shortOption": "e",
@@ -25,13 +26,15 @@
         "longOption": "sshd-port",
         "description": "the sshd service listened",
         "requireValue": true,
-        "defaultValue": "50022"
+        "defaultValue": "50022",
+        "propKey": "service.sshd.port"
     },
     {
         "longOption": "ca-dir",
         "description": "the dir to sshd certs",
         "requireValue": true,
-        "defaultValue": "${user.home}/.ssh-server/known-hosts"
+        "defaultValue": "${user.home}/.ssh-server/known-hosts",
+        "propKey": "service.sshd.cert.file"
     },
     {
         "shortOption":"v",

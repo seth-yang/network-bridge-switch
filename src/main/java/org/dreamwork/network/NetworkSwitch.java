@@ -3,6 +3,8 @@ package org.dreamwork.network;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.mina.core.session.IoSession;
 import org.apache.sshd.server.SshServer;
+import org.dreamwork.app.bootloader.ApplicationBootloader;
+import org.dreamwork.app.bootloader.IBootable;
 import org.dreamwork.cli.ArgumentParser;
 import org.dreamwork.cli.CommandLineHelper;
 import org.dreamwork.config.IConfiguration;
@@ -45,6 +47,7 @@ import static org.dreamwork.network.Keys.*;
 /**
  * Created by seth.yang on 2019/10/28
  */
+@IBootable (argumentDef = "network-bridge.json")
 public class NetworkSwitch {
     private static final Object LOCKER = new byte[0];
     public static final IoSession[] CACHE = new IoSession[1];
@@ -52,6 +55,7 @@ public class NetworkSwitch {
     private Logger logger;
 
     public static void main (String[] args) throws Exception {
+/*
         ClassLoader loader = NetworkSwitch.class.getClassLoader ();
         IConfiguration conf;
         {
@@ -98,15 +102,16 @@ public class NetworkSwitch {
         String logLevel = conf.getString (CFG_LOG_LEVEL);
         Properties props = CommandLineHelper.initLogger (loader, logLevel, logFile, "org.dreamwork");
         PropertyConfigurator.configure (props);
-
-        new NetworkSwitch ().start (conf);
+*/
+        ApplicationBootloader.run (NetworkSwitch.class, args);
+//        new NetworkSwitch ().start (conf);
     }
 
-    private NetworkSwitch () {
+    public NetworkSwitch () {
         logger = LoggerFactory.getLogger (NetworkSwitch.class);
     }
 
-    private void start (IConfiguration conf) throws Exception {
+    public void start (IConfiguration conf) throws Exception {
         if (logger.isTraceEnabled ()) {
             logger.trace ("initialing the database ...");
         }
@@ -116,6 +121,7 @@ public class NetworkSwitch {
             logger.trace ("starting the sshd server ...");
         }
 
+/*
         String ext = conf.getString (CFG_EXT_DIR);
         if (Files.exists (Paths.get (ext))) {
             Files.list (Paths.get (ext))
@@ -133,6 +139,7 @@ public class NetworkSwitch {
                         }
                     });
         }
+*/
 
         // start the ssh server
         int port = conf.getInt (CFG_SSHD_PORT, 9527);
@@ -163,6 +170,7 @@ public class NetworkSwitch {
         }
     }
 
+/*
     private static void merge (PropertyConfiguration conf, ArgumentParser parser) {
         if (parser.isArgPresent ('e')) {
             String ext_dir = parser.getValue ('e');
@@ -210,6 +218,7 @@ public class NetworkSwitch {
             conf.setRawProperty (CFG_SSHD_CA_DIR, parser.getDefaultValue ("ca-dir"));
         }
     }
+*/
 
     private void initDatabase (String file) throws SQLException, NoSuchAlgorithmException, IOException {
         File db  = new File (file);
