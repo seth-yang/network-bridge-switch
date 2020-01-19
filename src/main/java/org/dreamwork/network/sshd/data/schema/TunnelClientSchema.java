@@ -15,11 +15,11 @@ public class TunnelClientSchema extends DatabaseSchema {
 
     @Override
     public String getCreateDDL () {
-        return "CREATE TABLE t_tunnel_client (\n" +
-                "    token           TEXT       NOT NULL PRIMARY KEY,\n" +
-                "    name            TEXT       NOT NULL,\n" +
-                "    password        TEXT       NOT NULL,\n" +
-                "    last_conn       TEXT\n" +
+        return "CREATE TABLE t_tunnel_client (" +
+                "    token           TEXT       NOT NULL PRIMARY KEY," +
+                "    name            TEXT       NOT NULL," +
+                "    password        TEXT       NOT NULL," +
+                "    last_conn       TEXT" +
                 ")";
     }
 

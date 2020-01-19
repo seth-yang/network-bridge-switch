@@ -15,8 +15,8 @@ import static org.dreamwork.network.bridge.util.Helper.connect;
  */
 public abstract class ManagerClient {
     private int tunnelPort;
-    private int port;
-    private String name, host;
+    private int port, proxyPort;
+    private String name, host, proxyHost;
 
     public int getTunnelPort () {
         return tunnelPort;
@@ -27,10 +27,12 @@ public abstract class ManagerClient {
         return this;
     }
 
-    public ManagerClient (String name, String host, int port) {
+    public ManagerClient (String name, String host, int port, String proxyHost, int proxyPort) {
         this.name = name;
         this.host = host;
         this.port = port;
+        this.proxyHost = proxyHost;
+        this.proxyPort = proxyPort;
     }
 
     public void attach () {
@@ -42,7 +44,7 @@ public abstract class ManagerClient {
                     byte[] token = new byte[6];
                     buffer.get (token);
 
-                    IoSession peer = new Tunnel (host, tunnelPort, "192.168.2.44", 8081).getSession ();
+                    IoSession peer = new Tunnel (host, tunnelPort, proxyHost, proxyPort).getSession ();
                     peer.write (IoBuffer.wrap (token));
                 }
             }

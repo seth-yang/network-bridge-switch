@@ -28,6 +28,6 @@ CREATE TABLE t_tunnel_client (
 );
 
 CREATE TABLE t_sys_conf (
-    id              TEXT        NOT NULL PRIMARY,
+    id              TEXT        NOT NULL PRIMARY KEY,
     _value          TEXT
 );

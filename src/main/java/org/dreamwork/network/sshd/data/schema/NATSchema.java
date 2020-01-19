@@ -14,11 +14,11 @@ public class NATSchema extends DatabaseSchema {
     @Override
     public String getCreateDDL () {
         return "CREATE TABLE t_nat (\n" +
-                "    id              INTEGER     NOT NULL PRIMARY KEY,\n" +
-                "    src_port        INTEGER     NOT NULL,\n" +
-                "    dest_host       TEXT        NOT NULL,\n" +
-                "    dest_port       TEXT        NOT NULL,\n" +
-                "    auto_bind       INTEGER     NOT NULL DEFAULT 0\n" +
+                "    id              INTEGER     NOT NULL PRIMARY KEY," +
+                "    src_port        INTEGER     NOT NULL," +
+                "    dest_host       TEXT        NOT NULL," +
+                "    dest_port       TEXT        NOT NULL," +
+                "    auto_bind       INTEGER     NOT NULL DEFAULT 0" +
                 ")";
     }
 

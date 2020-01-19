@@ -15,9 +15,9 @@ public class SystemConfigSchema extends DatabaseSchema {
 
     @Override
     public String getCreateDDL () {
-        return "CREATE TABLE t_sys_conf (\n" +
-                "    id              TEXT        NOT NULL PRIMARY,\n" +
-                "    _value          TEXT\n" +
+        return "CREATE TABLE t_sys_conf (" +
+                "    id              TEXT        NOT NULL PRIMARY KEY," +
+                "    _value          TEXT" +
                 ")";
     }
 

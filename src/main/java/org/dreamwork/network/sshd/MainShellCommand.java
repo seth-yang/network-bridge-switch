@@ -36,6 +36,9 @@ public class MainShellCommand implements Command {
 
     private Console console;
 
+    private CommandParser parser = new SimpleCommandParser (true);
+//    private Map<String, CommandWrapper> commandPool = new HashMap<> ();
+
     private final Logger logger = LoggerFactory.getLogger (MainShellCommand.class);
 
     @Override
@@ -116,7 +119,7 @@ public class MainShellCommand implements Command {
             }
             channel.getProperties ().put ("connect.data", cd);
             console = new Console (in, out, cd, true);
-            CommandParser parser = new SimpleCommandParser (true);
+/*
             parser.registerCommand (
                     new Shell (channel, env),
                     new Ssh (channel),
@@ -145,6 +148,7 @@ public class MainShellCommand implements Command {
                     }
                 }
             });
+*/
             console.setCommandParser (parser);
             for (Map.Entry<String, String> e : env.getEnv ().entrySet ()) {
                 console.setEnv (e.getKey (), e.getValue ());
@@ -162,7 +166,19 @@ public class MainShellCommand implements Command {
     }
 
     @Override
-    public void destroy (ChannelSession channel) throws Exception {
+    public void destroy (ChannelSession channel) {
 
     }
+
+    void registerCommands (org.dreamwork.telnet.command.Command... commands) {
+        parser.registerCommand (commands);
+    }
+
+/*
+    private static final class CommandWrapper {
+        private String name;
+        private org.dreamwork.telnet.command.Command cmd;
+        private boolean registered;
+    }
+*/
 }
