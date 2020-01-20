@@ -6,6 +6,7 @@ import org.apache.mina.core.service.IoHandler;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import org.dreamwork.network.bridge.ConnectionInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,13 +29,14 @@ public class Helper {
         return acceptor;
     }
 
-    public static IoSession connect (String host, int port, IoHandler handler) {
+    public static ConnectionInfo connect (String host, int port, IoHandler handler) {
         NioSocketConnector connector = new NioSocketConnector ();
         connector.getSessionConfig ().setReuseAddress (true);
         connector.setHandler (handler);
         ConnectFuture future = connector.connect (new InetSocketAddress (host, port));
         future.awaitUninterruptibly ();
-        return future.getSession ();
+        IoSession session = future.getSession ();
+        return new ConnectionInfo (connector, session);
     }
 
     public static String text (IoBuffer buffer) {

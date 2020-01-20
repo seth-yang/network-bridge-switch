@@ -5,6 +5,8 @@ import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.dreamwork.util.StringUtil;
 import org.dreamwork.util.Tools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -12,6 +14,7 @@ import java.util.Map;
  * Created by seth.yang on 2019/12/14
  */
 public class TunnelHandler extends IoHandlerAdapter {
+    private final Logger logger = LoggerFactory.getLogger (TunnelHandler.class);
     private Map<String, IoSession>  managed_tunnels;
     private Locks                   locks;
 
@@ -27,7 +30,9 @@ public class TunnelHandler extends IoHandlerAdapter {
 
     @Override
     public void sessionCreated (IoSession session) {
-        System.out.println ("a tunnel connected");
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("a tunnel connected");
+        }
     }
 
     @Override
@@ -39,12 +44,16 @@ public class TunnelHandler extends IoHandlerAdapter {
                 byte[] token = new byte[6];
                 buffer.get (token);
                 key = Tools.toHex (token).toLowerCase ();
-                System.out.println ("[tunnel manager] got token: " + key);
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("[tunnel manager] got token: {}", key);
+                }
                 managed_tunnels.put (key, session);
                 locks.notify (key);
             }
         } else {
-            System.out.println ("[tunnel manager] write to peer");
+            if (logger.isTraceEnabled ()) {
+                logger.trace ("[tunnel manager] write to peer");
+            }
             peer.write (message);
         }
     }
@@ -52,7 +61,9 @@ public class TunnelHandler extends IoHandlerAdapter {
     @Override
     public void sessionClosed (IoSession session) {
         IoSession peer = (IoSession) session.getAttribute ("peer");
-        System.out.println ("[tunnel manager] close session.");
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("[tunnel manager] close session.");
+        }
         if (peer != null) {
             peer.removeAttribute ("peer");
         }
