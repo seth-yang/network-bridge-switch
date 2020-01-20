@@ -7,6 +7,7 @@ import org.dreamwork.db.SQLite;
 import org.dreamwork.network.bridge.NetBridge;
 import org.dreamwork.network.sshd.Sshd;
 import org.dreamwork.network.sshd.cmd.NatCommand;
+import org.dreamwork.network.sshd.cmd.SystemConfigCommand;
 import org.dreamwork.network.sshd.cmd.TunnelCommand;
 import org.dreamwork.network.sshd.data.NAT;
 import org.slf4j.Logger;

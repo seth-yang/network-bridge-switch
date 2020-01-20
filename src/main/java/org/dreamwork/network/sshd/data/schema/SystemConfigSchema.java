@@ -9,7 +9,7 @@ public class SystemConfigSchema extends DatabaseSchema {
     public SystemConfigSchema () {
         tableName = "t_sys_conf";
         fields    = new String[] {
-                "id", "_value"
+                "id", "_value", "editable"
         };
     }
 
@@ -17,7 +17,8 @@ public class SystemConfigSchema extends DatabaseSchema {
     public String getCreateDDL () {
         return "CREATE TABLE t_sys_conf (" +
                 "    id              TEXT        NOT NULL PRIMARY KEY," +
-                "    _value          TEXT" +
+                "    _value          TEXT," +
+                "    editable        INTEGER" +
                 ")";
     }
 

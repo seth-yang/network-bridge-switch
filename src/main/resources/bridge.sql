@@ -1,5 +1,5 @@
 CREATE TABLE t_user (
-    user_name       TEXT        PRIMARY KEY,
+    user_name       TEXT        NOT NULL PRIMARY KEY,
     password        TEXT
 );
 
@@ -29,5 +29,6 @@ CREATE TABLE t_tunnel_client (
 
 CREATE TABLE t_sys_conf (
     id              TEXT        NOT NULL PRIMARY KEY,
-    _value          TEXT
+    _value          TEXT,
+    editable        INTEGER
 );

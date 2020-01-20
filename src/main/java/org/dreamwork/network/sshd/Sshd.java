@@ -9,6 +9,7 @@ import org.dreamwork.network.Context;
 import org.dreamwork.network.Keys;
 import org.dreamwork.network.cert.KeyTool;
 import org.dreamwork.network.sshd.cmd.PasswordCommand;
+import org.dreamwork.network.sshd.cmd.SystemConfigCommand;
 import org.dreamwork.network.sshd.cmd.UserCommand;
 import org.dreamwork.network.sshd.data.Schema;
 import org.dreamwork.network.sshd.data.SystemConfig;
@@ -54,6 +55,8 @@ public class Sshd {
         if (logger.isTraceEnabled ()) {
             logger.trace ("the database initialed.");
         }
+
+        shell.registerCommands (new SystemConfigCommand (Context.db));
         return Context.db;
     }
 
@@ -131,10 +134,12 @@ public class Sshd {
         SystemConfig sc_private_key = new SystemConfig ();
         sc_private_key.setId (Keys.SYS_CONFIG.CFG_PRIMARY_KEY);
         sc_private_key.setValue (new String (Base64.encode (pri.getEncoded ())));
+        sc_private_key.setEditable (false);
 
         SystemConfig sc_public_key  = new SystemConfig ();
         sc_public_key.setId (Keys.SYS_CONFIG.CFG_PUBLIC_KEY);
         sc_public_key.setValue (new String (Base64.encode (pub.getEncoded ())));
+        sc_public_key.setEditable (false);
 
         sqlite.save (Arrays.asList (sc_private_key, sc_public_key));
     }

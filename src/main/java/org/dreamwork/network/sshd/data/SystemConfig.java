@@ -17,6 +17,9 @@ public class SystemConfig {
     @ISchemaField (name = "_value")
     private String value;
 
+    @ISchemaField (name = "editable")
+    private Boolean editable;
+
     public String getId () {
         return id;
     }
@@ -31,6 +34,14 @@ public class SystemConfig {
 
     public void setValue (String value) {
         this.value = value;
+    }
+
+    public boolean isEditable () {
+        return editable == null ? false : editable;
+    }
+
+    public void setEditable (Boolean editable) {
+        this.editable = editable;
     }
 
     @Override
