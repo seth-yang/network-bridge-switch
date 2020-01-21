@@ -2,7 +2,7 @@ package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.cli.text.Alignment;
 import org.dreamwork.cli.text.TextFormater;
-import org.dreamwork.db.SQLite;
+import org.dreamwork.db.IDatabase;
 import org.dreamwork.network.sshd.data.SystemConfig;
 import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.TerminalIO;
@@ -25,23 +25,9 @@ public class SystemConfigCommand extends Command {
     private String message = null;
     private String id, value;
 
-    private SQLite sqlite;
+    private IDatabase sqlite;
 
-    public static void main (String[] args) {
-        Pattern P = Pattern.compile ("^(.*?)((\\s*=\\s*)|\\s*)(.*?)$");
-        String[] text = {"test.is.is.test = 1", "this.is.a.test \"100 \""};
-        for (String e : text) {
-            Matcher m = P.matcher (e);
-            if (m.matches ()) {
-                System.out.println (e + ": ");
-                for (int i = 1; i < m.groupCount (); i ++) {
-                    System.out.printf ("group [%d] = %s%n", i, m.group (i));
-                }
-            }
-        }
-    }
-
-    public SystemConfigCommand (SQLite sqlite) {
+    public SystemConfigCommand (IDatabase sqlite) {
         super ("sys-config", null, "system config manage");
         this.sqlite = sqlite;
     }

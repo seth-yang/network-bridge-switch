@@ -1,8 +1,3 @@
-CREATE TABLE t_user (
-    user_name       TEXT        NOT NULL PRIMARY KEY,
-    password        TEXT
-);
-
 CREATE TABLE t_device (
     id              INTEGER     NOT NULL PRIMARY KEY,
     name            TEXT,

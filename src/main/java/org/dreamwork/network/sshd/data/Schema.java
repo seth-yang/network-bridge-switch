@@ -5,7 +5,6 @@ import org.dreamwork.persistence.DatabaseSchema;
 
 public class Schema {
 	public static void registerAllSchemas () {
-		DatabaseSchema.register (UserSchema.class);
 		DatabaseSchema.register (DeviceSchema.class);
 		DatabaseSchema.register (NATSchema.class);
 		DatabaseSchema.register (SystemConfigSchema.class);
