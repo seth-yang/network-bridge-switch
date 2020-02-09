@@ -67,8 +67,8 @@ public class NetworkSwitch {
         sshd.init (database);
         sshd.registerCommands (
                 new SystemConfigCommand (database),
-                new TunnelCommand (),   // tunnel manage command
-                new NatCommand ()       // nat manage command
+                new TunnelCommand (),                   // tunnel manage command
+                new NatCommand (database)               // nat manage command
         ).bind ();
 
         // bind the NATs
@@ -97,7 +97,12 @@ public class NetworkSwitch {
             logger.error ("can't create dir: {}", dir.getCanonicalPath ());
             throw new IOException ("can't create dir: " + dir.getCanonicalPath ());
         }
-        return SQLite.get (db.getCanonicalPath ());
+
+        SQLite sqlite = SQLite.get (db.getCanonicalPath ());
+        if (logger.isTraceEnabled ()) {
+            sqlite.setDebug (true);
+        }
+        return sqlite;
     }
 
     private void initRootCA (IDatabase database) {

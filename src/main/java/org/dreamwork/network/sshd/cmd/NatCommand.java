@@ -2,7 +2,7 @@ package org.dreamwork.network.sshd.cmd;
 
 import org.dreamwork.cli.text.Alignment;
 import org.dreamwork.cli.text.TextFormater;
-import org.dreamwork.network.Context;
+import org.dreamwork.db.IDatabase;
 import org.dreamwork.network.bridge.NetBridge;
 import org.dreamwork.network.sshd.data.NAT;
 import org.dreamwork.telnet.Console;
@@ -36,9 +36,11 @@ public class NatCommand extends Command {
     private int localPort = -1, remotePort = -1;
     private boolean auto_bind = false;
     private String message = null;
+    private IDatabase database;
 
-    public NatCommand () {
+    public NatCommand (IDatabase database) {
         super("nat", null, "build or print NAT rules");
+        this.database = database;
     }
 
     @Override
@@ -238,7 +240,7 @@ public class NatCommand extends Command {
         nat.setLocalPort (localPort);
         nat.setRemoteHost (host);
         nat.setRemotePort (remotePort);
-        Context.db.save (nat);
+        database.save (nat);
     }
 
     private void enable (Console console) throws IOException {
@@ -272,7 +274,7 @@ public class NatCommand extends Command {
         NAT nat= get (console);
         if (nat != null) {
             nat.setAutoBind (autoBind);
-            Context.db.update (nat);
+            database.update (nat);
         }
     }
 
@@ -280,12 +282,12 @@ public class NatCommand extends Command {
         NetBridge.shutdown (localPort);
         NAT nat = get (console);
         if (nat != null) {
-            Context.db.delete (nat);
+            database.delete (nat);
         }
     }
 
     private NAT get (Console console) throws IOException {
-        NAT nat = Context.db.getSingle (NAT.class, "SELECT * FROM t_nat WHERE src_port = ?", localPort);
+        NAT nat = database.getSingle (NAT.class, "SELECT * FROM t_nat WHERE src_port = ?", localPort);
         if (nat == null) {
             console.errorln ("The NAT rule bound local port: " + localPort + " not found!");
         }
@@ -293,7 +295,7 @@ public class NatCommand extends Command {
     }
 
     private void printRules (Console console) throws IOException {
-        List<NAT> list = Context.db.get (NAT.class);
+        List<NAT> list = database.get (NAT.class);
         int[] w = new int[HEADERS.length];
         for (int i = 0; i < HEADERS.length; i ++) {
             w [i] = HEADERS[i].length ();
