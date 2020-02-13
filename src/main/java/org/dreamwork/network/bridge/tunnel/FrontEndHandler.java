@@ -40,8 +40,17 @@ public class FrontEndHandler extends IoHandlerAdapter {
 
     @Override
     public void sessionOpened (IoSession session) throws Exception {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("opening a front-end session: remote = {}, local-port = {}", session.getRemoteAddress (), category);
+        }
         IoSession peer = managedSessions.get (category);
         if (peer != null) {
+            if (logger.isTraceEnabled ()) {
+                logger.trace ("found the peer: {}", peer);
+            }
+            if (logger.isInfoEnabled ()) {
+                logger.info ("a connection establishing: from {} to {}", session, peer);
+            }
             final byte[] token = new byte[6];
             sr.nextBytes (token);
             String key = Tools.toHex (token).toLowerCase ();
@@ -49,27 +58,48 @@ public class FrontEndHandler extends IoHandlerAdapter {
                 logger.trace ("generated token: {}", key);
             }
             locks.add (key, token);
-            peer.write (IoBuffer.wrap (token));
-
-            long now = System.currentTimeMillis ();
-            locks.await (key, 10000);
             if (logger.isTraceEnabled ()) {
-                logger.trace ("first wait broken");
+                logger.trace ("a new lock {} acquired.", key);
             }
-            if (System.currentTimeMillis () - now < 10000) {
-                peer = managedTunnels.get (key);
-                session.setAttribute ("peer", peer);
-                peer.setAttribute ("peer", session);
+            try {
                 if (logger.isTraceEnabled ()) {
-                    logger.trace (">>> tunnel connected.");
+                    logger.trace ("sending the token [{}] to client...", key);
                 }
-                if (blocked) {
-                    locks.await (key);
+                peer.write (IoBuffer.wrap (token));
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("token [{}] wrote, waiting for client's response", key);
+                    System.out.println ();
+                    System.out.println ();
+                    System.out.println ();
                 }
+
+                long now = System.currentTimeMillis ();
+                locks.await (key, 10000);
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("first wait broken");
+                }
+                if (System.currentTimeMillis () - now < 10000) {
+                    if (logger.isTraceEnabled ()) {
+                        logger.trace ("here, i'm waked up! it means the client responds me, get to work!");
+                    }
+                    peer = managedTunnels.get (key);
+                    session.setAttribute ("peer", peer);
+                    peer.setAttribute ("peer", session);
+                    if (logger.isTraceEnabled ()) {
+                        logger.trace (">>> tunnel connected. local = {}, peer = {}", session, peer);
+                    }
+                    if (blocked) {
+                        locks.await (key);
+                    }
+                } else {
+                    session.write (IoBuffer.wrap ("timeout".getBytes ()));
+                    session.closeNow ();
+                }
+            } finally {
                 locks.release (key);
-            } else {
-                session.write (IoBuffer.wrap ("timeout".getBytes ()));
-                session.closeNow ();
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("lock {} released.", key);
+                }
             }
         } else {
             session.write (IoBuffer.wrap ("no client active".getBytes ()));
@@ -93,6 +123,9 @@ public class FrontEndHandler extends IoHandlerAdapter {
     @Override
     public void sessionClosed (IoSession session) {
         IoSession peer = (IoSession) session.getAttribute ("peer");
+        if (logger.isInfoEnabled ()) {
+            logger.info ("front-end session closed. local = {}, peer = {}", session, peer);
+        }
         if (peer != null) {
             peer.closeNow ();
         }

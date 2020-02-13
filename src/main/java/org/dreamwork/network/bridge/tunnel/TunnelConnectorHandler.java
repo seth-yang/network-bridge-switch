@@ -13,14 +13,14 @@ import java.util.Map;
 /**
  * Created by seth.yang on 2019/12/14
  */
-public class TunnelHandler extends IoHandlerAdapter {
-    private final Logger logger = LoggerFactory.getLogger (TunnelHandler.class);
+public class TunnelConnectorHandler extends IoHandlerAdapter {
+    private final Logger logger = LoggerFactory.getLogger (TunnelConnectorHandler.class);
     private Map<String, IoSession>  managed_tunnels;
     private Locks                   locks;
 
     private String key;
 
-    public TunnelHandler (Map<String, IoSession> managed_tunnels) {
+    public TunnelConnectorHandler (Map<String, IoSession> managed_tunnels) {
         this.managed_tunnels = managed_tunnels;
     }
 
@@ -31,7 +31,7 @@ public class TunnelHandler extends IoHandlerAdapter {
     @Override
     public void sessionCreated (IoSession session) {
         if (logger.isTraceEnabled ()) {
-            logger.trace ("a tunnel connected");
+            logger.trace ("a tunnel connected, remote = {}", session.getRemoteAddress ());
         }
     }
 
@@ -51,9 +51,6 @@ public class TunnelHandler extends IoHandlerAdapter {
                 locks.notify (key);
             }
         } else {
-            if (logger.isTraceEnabled ()) {
-                logger.trace ("[tunnel manager] write to peer");
-            }
             peer.write (message);
         }
     }
@@ -62,7 +59,7 @@ public class TunnelHandler extends IoHandlerAdapter {
     public void sessionClosed (IoSession session) {
         IoSession peer = (IoSession) session.getAttribute ("peer");
         if (logger.isTraceEnabled ()) {
-            logger.trace ("[tunnel manager] close session.");
+            logger.trace (">>>>>>>> the session closed. key = {}, remote = {}", key, session.getRemoteAddress ());
         }
         if (peer != null) {
             peer.removeAttribute ("peer");

@@ -36,7 +36,6 @@ public class NetworkSwitch {
     private static final Object LOCKER = new byte[0];
 
     private Logger logger;
-//    private IConfiguration conf;
 
     public static void main (String[] args) throws InvocationTargetException {
         ApplicationBootloader.run (NetworkSwitch.class, args);

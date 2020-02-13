@@ -17,19 +17,22 @@ import static org.dreamwork.network.bridge.util.Helper.bind;
 public class TunnelManager {
     private static ManageHandler handler;
     private static NioSocketAcceptor[] acceptors = new NioSocketAcceptor[2];
+    private static boolean running = false;
 
-    public static void start (int manage_port, int tunnel_port) throws IOException {
+    public static void start (int manage_port, int connector_port) throws IOException {
         Map<String, IoSession> managed_tunnels  = new HashMap<> ();
-        Locks locks                              = new Locks ();
+        Locks locks                             = new Locks ();
 
         // manager port
         handler = new ManageHandler (managed_tunnels, locks);
         acceptors[0] = bind (manage_port, handler);
 
         // tunnel port
-        TunnelHandler th = new TunnelHandler (managed_tunnels);
+        TunnelConnectorHandler th = new TunnelConnectorHandler (managed_tunnels);
         th.setLocks (locks);
-        acceptors[1] = bind (tunnel_port, th);
+        acceptors[1] = bind (connector_port, th);
+
+        running = true;
     }
 
     public static void stop () {
@@ -40,9 +43,15 @@ public class TunnelManager {
         if (acceptors[1] != null) {
             acceptors[1].unbind ();
         }
+
+        running = false;
     }
 
     public static List<Client> getClients () {
         return handler == null ? Collections.emptyList () : handler.getClients ();
+    }
+
+    public static boolean isRunning () {
+        return running;
     }
 }

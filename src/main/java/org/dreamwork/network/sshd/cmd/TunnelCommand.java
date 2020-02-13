@@ -21,7 +21,6 @@ import java.util.List;
 public class TunnelCommand extends Command {
     private String action = "list", message;
     private String name;
-//    private int    port   = 0;
 
     public TunnelCommand () {
         super ("tunnel", null, "tunnel manager command");
@@ -71,17 +70,30 @@ public class TunnelCommand extends Command {
                     break;
                 case "start":
                     IConfiguration conf = Context.getConfiguration ("tunnel");
-                    int manage_port = conf.getInt ("tunnel.manage.port", 50041);
-                    int tunnel_port = conf.getInt ("tunnel.connector.port", 50042);
-                    TunnelManager.start (manage_port, tunnel_port);
+                    int manage_port     = conf.getInt ("tunnel.manage.port", 50041);
+                    int connector_port  = conf.getInt ("tunnel.connector.port", 50042);
+                    TunnelManager.start (manage_port, connector_port);
                     break;
                 case "stop":
                     TunnelManager.stop ();
                     break;
+/*
                 case "allow":
                     break;
+*/
+                case "state":
+                    if (TunnelManager.isRunning ()) {
+                        console.setForegroundColor (TerminalIO.GREEN);
+                        console.println ("    running");
+                    } else {
+                        console.setForegroundColor (TerminalIO.YELLOW);
+                        console.println ("    not running");
+                    }
+                    break;
+/*
                 case "deny":
                     break;
+*/
                 default:
                     console.errorln ("invalid command: " + action + ", type tunnel --help for details");
                     break;
@@ -101,7 +113,8 @@ public class TunnelCommand extends Command {
                 "tunnel [list]             show all active tunnels\r\n" +
                 "tunnel auth <name>        authenticate a client and generate a unique key for it\r\n" +
                 "tunnel start              start the tunnel service\r\n" +
-                "tunnel stop               stop the tunnel service"
+                "tunnel stop               stop the tunnel service\r\n" +
+                "tunnel state              shows the tunnel manage state"
 /*
                 "tunnel allow <port>       allow creating a tunnel on port\r\n" +
                 "tunnel deny <port>        deny a port to create tunnel"

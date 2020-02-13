@@ -5,6 +5,8 @@ import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.dreamwork.network.bridge.util.Helper;
 import org.dreamwork.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -17,6 +19,8 @@ import java.util.TreeMap;
  * Created by seth.yang on 2019/12/14
  */
 public class ManageHandler extends IoHandlerAdapter {
+    private final Logger logger = LoggerFactory.getLogger (ManageHandler.class);
+
     private Map<Integer, IoSession> managed_sessions = new TreeMap<> ();
     private Map<String, IoSession>  managed_tunnels;
     private Locks                   locks;
@@ -39,6 +43,10 @@ public class ManageHandler extends IoHandlerAdapter {
         int port = dis.readInt ();
         boolean blocked = dis.readBoolean ();
         String name = dis.readUTF ();
+
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("receive a message: {name = {}, port = {}, blocked = {}}", name, port, blocked);
+        }
 
         Client client = new Client (name, blocked, port);
         clients.put (name, client);
@@ -64,12 +72,17 @@ public class ManageHandler extends IoHandlerAdapter {
                 clients.remove (client.name);
 
                 client.acceptor.unbind ();
+                logger.info ("tunnel {} unbind from port {}", client.name, client.port);
             }
         }
     }
 
     @Override
-    public void exceptionCaught (IoSession session, Throwable cause) throws Exception {
+    public void exceptionCaught (IoSession session, Throwable cause) {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("an error occurred in session: {}", session);
+        }
+        logger.warn (cause.getMessage (), cause);
         session.closeNow ();
     }
 

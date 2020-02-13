@@ -60,6 +60,7 @@
     </build>
 
     <dependencies>
+<!--
         <dependency>
             <groupId>org.dreamwork</groupId>
             <artifactId>dreamwork-base</artifactId>
@@ -80,6 +81,7 @@
             <artifactId>sshd-core</artifactId>
             <version>2.3.0</version>
         </dependency>
+-->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
