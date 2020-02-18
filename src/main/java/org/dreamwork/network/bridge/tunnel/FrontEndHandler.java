@@ -3,7 +3,8 @@ package org.dreamwork.network.bridge.tunnel;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
-import org.dreamwork.util.Tools;
+import org.dreamwork.network.bridge.tunnel.data.TokenCommand;
+import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,55 +42,66 @@ public class FrontEndHandler extends IoHandlerAdapter {
     @Override
     public void sessionOpened (IoSession session) throws Exception {
         if (logger.isTraceEnabled ()) {
-            logger.trace ("opening a front-end session: remote = {}, local-port = {}", session.getRemoteAddress (), category);
+            logger.trace ("opening a front-end session: {}", session);
         }
-        IoSession peer = managedSessions.get (category);
-        if (peer != null) {
+
+        IoSession clientManager = managedSessions.get (category);
+        if (clientManager != null) {
             if (logger.isTraceEnabled ()) {
-                logger.trace ("found the peer: {}", peer);
+                logger.trace ("found the client manager: {}", clientManager);
             }
-            if (logger.isInfoEnabled ()) {
-                logger.info ("a connection establishing: from {} to {}", session, peer);
-            }
+
             final byte[] token = new byte[6];
             sr.nextBytes (token);
-            String key = Tools.toHex (token).toLowerCase ();
+            String key = StringUtil.byte2hex (token, false);
             if (logger.isTraceEnabled ()) {
                 logger.trace ("generated token: {}", key);
             }
             locks.add (key, token);
             if (logger.isTraceEnabled ()) {
-                logger.trace ("a new lock {} acquired.", key);
+                logger.trace ("a new lock [{}] acquired.", key);
             }
             try {
                 if (logger.isTraceEnabled ()) {
                     logger.trace ("sending the token [{}] to client...", key);
                 }
-                peer.write (IoBuffer.wrap (token));
+                TokenCommand tc = new TokenCommand ();
+                tc.token = token;
+                clientManager.write (tc);
                 if (logger.isTraceEnabled ()) {
                     logger.trace ("token [{}] wrote, waiting for client's response", key);
-                    System.out.println ();
-                    System.out.println ();
-                    System.out.println ();
+                    logger.trace ("waiting for 10 seconds to receive client manager create the proxy...");
                 }
-
-                long now = System.currentTimeMillis ();
+                long now = System.currentTimeMillis (), take;
                 locks.await (key, 10000);
+                take = System.currentTimeMillis () - now;
                 if (logger.isTraceEnabled ()) {
-                    logger.trace ("first wait broken");
+                    logger.trace ("first wait broken, take {} ms", take);
                 }
-                if (System.currentTimeMillis () - now < 10000) {
+                if (take < 10000) {
                     if (logger.isTraceEnabled ()) {
                         logger.trace ("here, i'm waked up! it means the client responds me, get to work!");
                     }
-                    peer = managedTunnels.get (key);
-                    session.setAttribute ("peer", peer);
-                    peer.setAttribute ("peer", session);
-                    if (logger.isTraceEnabled ()) {
-                        logger.trace (">>> tunnel connected. local = {}, peer = {}", session, peer);
-                    }
-                    if (blocked) {
-                        locks.await (key);
+
+                    IoSession tunnel = managedTunnels.get (key);
+                    if (tunnel != null) {
+                        session.setAttribute ("peer", tunnel);
+                        tunnel.setAttribute ("peer", session);
+                        tunnel.setAttribute ("key", key);
+                        session.setAttribute ("key", key);
+                        if (logger.isInfoEnabled ()) {
+                            logger.info (">>> tunnel [{}] establishing. local = {}, peer = {}", key, session, tunnel);
+                        }
+                        if (blocked) {
+                            if (logger.isTraceEnabled ()) {
+                                logger.trace ("the client required me await until it disconnect");
+                            }
+                            locks.await (key);
+                        }
+                    } else {
+                        // no key associated? I don't know why :(
+                        logger.warn ("there's no key associated to this session...");
+                        session.closeNow ();
                     }
                 } else {
                     session.write (IoBuffer.wrap ("timeout".getBytes ()));
@@ -109,6 +121,9 @@ public class FrontEndHandler extends IoHandlerAdapter {
 
     @Override
     public void exceptionCaught (IoSession session, Throwable cause) {
+        String key = (String) session.getAttribute ("key");
+        logger.warn ("an error occurred in tunnel [{}]: ", key);
+        logger.warn (cause.getMessage (), cause);
         cause.printStackTrace ();
     }
 
@@ -122,6 +137,10 @@ public class FrontEndHandler extends IoHandlerAdapter {
 
     @Override
     public void sessionClosed (IoSession session) {
+        String key = (String) session.getAttribute ("key");
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("tunnel [{}] going to close", key);
+        }
         IoSession peer = (IoSession) session.getAttribute ("peer");
         if (logger.isInfoEnabled ()) {
             logger.info ("front-end session closed. local = {}, peer = {}", session, peer);
@@ -130,5 +149,6 @@ public class FrontEndHandler extends IoHandlerAdapter {
             peer.closeNow ();
         }
         session.removeAttribute ("peer");
+        session.removeAttribute ("key");
     }
 }

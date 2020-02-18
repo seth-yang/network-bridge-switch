@@ -1,6 +1,8 @@
 package org.dreamwork.network.bridge.tunnel;
 
+import org.apache.mina.core.filterchain.IoFilter;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
 import java.io.IOException;
@@ -24,8 +26,9 @@ public class TunnelManager {
         Locks locks                             = new Locks ();
 
         // manager port
+        ProtocolCodecFilter filter  = new ProtocolCodecFilter (new ManageProtocolFactory ());
         handler = new ManageHandler (managed_tunnels, locks);
-        acceptors[0] = bind (manage_port, handler);
+        acceptors[0] = bind (manage_port, handler, new String[] {"protocol"}, new IoFilter[] { filter });
 
         // tunnel port
         TunnelConnectorHandler th = new TunnelConnectorHandler (managed_tunnels);

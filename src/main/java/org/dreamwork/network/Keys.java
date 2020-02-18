@@ -23,5 +23,9 @@ public interface Keys {
     interface SYS_CONFIG {
         String CFG_PRIMARY_KEY      = PACKET_NAME + "config.CFG_PRIMARY_KEY";
         String CFG_PUBLIC_KEY       = PACKET_NAME + "config.CFG_PUBLIC_KEY";
+        String CFG_TUNNEL_START     = PACKET_NAME + "config.CFG_TUNNEL_START";
+
+        String MANAGE_PORT          = "tunnel.manage.port";
+        String CONNECTOR_PORT       = "tunnel.connector.port";
     }
 }

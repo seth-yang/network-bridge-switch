@@ -7,6 +7,7 @@ import org.dreamwork.db.IDatabase;
 import org.dreamwork.db.SQLite;
 import org.dreamwork.misc.Base64;
 import org.dreamwork.network.bridge.NetBridge;
+import org.dreamwork.network.bridge.tunnel.TunnelManager;
 import org.dreamwork.network.cert.KeyTool;
 import org.dreamwork.network.sshd.Sshd;
 import org.dreamwork.network.sshd.cmd.NatCommand;
@@ -26,6 +27,10 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.dreamwork.network.Keys.SYS_CONFIG.*;
+import static org.dreamwork.network.Keys.SYS_CONFIG.CONNECTOR_PORT;
+import static org.dreamwork.network.service.impls.SystemConfigServiceImpl.getPort;
 
 /**
  * Created by seth.yang on 2019/10/28
@@ -66,7 +71,7 @@ public class NetworkSwitch {
         sshd.init (database);
         sshd.registerCommands (
                 new SystemConfigCommand (database),
-                new TunnelCommand (),                   // tunnel manage command
+                new TunnelCommand (database),           // tunnel manage command
                 new NatCommand (database)               // nat manage command
         ).bind ();
 
@@ -77,6 +82,21 @@ public class NetworkSwitch {
                 for (NAT nat : list) {
                     NetBridge.transform (nat);
                 }
+            }
+        }
+
+        // starting the tunnel manager if set aut auto start
+        {
+            SystemConfig item = database.getByPK (SystemConfig.class, CFG_TUNNEL_START);
+            if (item != null && "true".equals (item.getValue ())) {
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("the tunnel manage sets to auto-start.");
+                }
+                int manage_port = getPort (database, MANAGE_PORT, conf.getInt (MANAGE_PORT, 50041));
+                int connector_port = getPort (database, CONNECTOR_PORT, conf.getInt (CONNECTOR_PORT, 50042));
+                TunnelManager.start (manage_port, connector_port);
+            } else if (logger.isTraceEnabled ()) {
+                logger.trace ("the tunnel manager did not sets to auto-start, nothing to do");
             }
         }
 

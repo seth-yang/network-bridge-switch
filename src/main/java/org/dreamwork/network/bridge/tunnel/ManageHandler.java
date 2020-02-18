@@ -1,15 +1,16 @@
 package org.dreamwork.network.bridge.tunnel;
 
-import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
+import org.dreamwork.network.bridge.tunnel.data.Command;
+import org.dreamwork.network.bridge.tunnel.data.CreationCommand;
+import org.dreamwork.network.bridge.tunnel.data.Reply;
 import org.dreamwork.network.bridge.util.Helper;
 import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,27 @@ public class ManageHandler extends IoHandlerAdapter {
 
     @Override
     public void messageReceived (IoSession session, Object message) throws Exception {
+        Command cmd = (Command) message;
+        switch (cmd.command) {
+            case Command.CREATION:  // require create a tunnel
+                logger.debug ("receive a creation command in session: {}", session);
+                bind ((CreationCommand) message, session);
+                // reply to client
+                logger.debug ("write reply to session: {}", session);
+                session.write (new Reply ());
+                break;
+            case Command.HEARTBEAT:  // heartbeat
+                // here we got the client's heartbeat
+                if (logger.isTraceEnabled ()) {
+                    logger.trace ("got a heartbeat from client [{}], reply it back", session.getAttribute ("tunnel.name"));
+                }
+                session.write (message);
+                break;
+            case Command.CLOSE:  // closing
+                session.closeNow ();
+                break;
+        }
+/*
         IoBuffer buffer = (IoBuffer) message;
         int length = buffer.limit ();
         byte[] data = new byte[length];
@@ -58,11 +80,12 @@ public class ManageHandler extends IoHandlerAdapter {
         feh.setManagedTunnels (managed_tunnels);
         feh.setLocks (locks);
         client.acceptor = Helper.bind (port, feh);
+*/
     }
 
     @Override
     public void sessionClosed (IoSession session) {
-        String name = (String) session.getAttribute ("key");
+        String name = (String) session.getAttribute ("tunnel.name");
         if (!StringUtil.isEmpty (name)) {
             if (clients.containsKey (name)) {
                 Client client = clients.get (name);
@@ -90,4 +113,49 @@ public class ManageHandler extends IoHandlerAdapter {
         return new ArrayList<> (clients.values ());
     }
 
+    private void bind (CreationCommand creation, IoSession session) throws IOException {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("got a creation: {");
+            logger.trace ("    name    = {}", creation.name);
+            logger.trace ("    port    = {}", creation.port);
+            logger.trace ("    blocked = {}", creation.blocked);
+            logger.trace ("}");
+        }
+
+        Client client = new Client (creation.name, creation.blocked, creation.port);
+        clients.put (creation.name, client);
+        session.setAttribute ("tunnel.name", creation.name);
+        session.setAttribute ("mapped.port", creation.port);
+        managed_sessions.put (creation.port, session);
+
+        FrontEndHandler feh = new FrontEndHandler (managed_sessions, creation.port, creation.blocked);
+        feh.setManagedTunnels (managed_tunnels);
+        feh.setLocks (locks);
+        client.acceptor = Helper.bind (creation.port, feh);
+
+        logger.info ("tunnel manager [{}] listened on {}", creation.name, creation.port);
+    }
+
+/*
+    private void bind (DataInputStream dis, IoSession session) throws IOException {
+        int port = dis.readInt ();
+        boolean blocked = dis.readBoolean ();
+        String name = dis.readUTF ();
+
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("receive a message: {name = {}, port = {}, blocked = {}}", name, port, blocked);
+        }
+
+        Client client = new Client (name, blocked, port);
+        clients.put (name, client);
+        session.setAttribute ("key", name);
+
+        managed_sessions.put (port, session);
+
+        FrontEndHandler feh = new FrontEndHandler (managed_sessions, port, blocked);
+        feh.setManagedTunnels (managed_tunnels);
+        feh.setLocks (locks);
+        client.acceptor = Helper.bind (port, feh);
+    }
+*/
 }
