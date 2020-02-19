@@ -9,9 +9,13 @@ import org.dreamwork.telnet.Console;
 import org.dreamwork.telnet.TerminalIO;
 import org.dreamwork.telnet.command.Command;
 import org.dreamwork.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,6 +41,8 @@ public class NatCommand extends Command {
     private boolean auto_bind = false;
     private String message = null;
     private IDatabase database;
+
+    private final Logger logger = LoggerFactory.getLogger (NatCommand.class);
 
     public NatCommand (IDatabase database) {
         super("nat", null, "build or print NAT rules");
@@ -195,7 +201,68 @@ public class NatCommand extends Command {
 
     @Override
     public List<String> guess (String text) {
+        if (logger.isTraceEnabled ()) {
+            logger.trace ("text = {}", text);
+        }
+
+        if ("nat".equals (text)) {
+            List<String> list = Arrays.asList (VALID_COMMANDS);
+            list.sort (String::compareTo);
+            return list;
+        }
+
+        String[] tmp = TextFormater.parse (text);
+        if (tmp.length > 1) {
+            List<String> list = new ArrayList<> ();
+            String action = tmp [1];
+            for (String cmd : VALID_COMMANDS) {
+                if (cmd.startsWith (action)) {
+                    list.add (cmd);
+                }
+            }
+
+            if (list.isEmpty ()) {
+                // action 未匹配到，不改变当前输入
+                return null;
+            }
+
+            if (list.size () == 1) {
+                // 只有唯一匹配，看看是否完全相等
+                boolean fullMatches = false;
+                for (String cmd : VALID_COMMANDS) {
+                    if (cmd.equals (action)) {
+                        fullMatches = true;
+                        break;
+                    }
+                }
+
+                if (!fullMatches) {
+                    // 不是完全匹配，返回列表用于补齐 action
+                    return list;
+                }
+            } else {
+                return list;
+            }
+        }
+
         return null;
+/*
+        String[] tmp = text.split ("\\s+");
+        int index = 0;
+        if ("nat".equals (tmp [0])) {
+            index ++;
+        }
+
+        List<String> result = new ArrayList<> ();
+        while (index < tmp.length) {
+            String word = tmp [index ++];
+            if (logger.isTraceEnabled ()) {
+                logger.trace ("tmp [{}] = {}", index - 1, word);
+            }
+
+        }
+        return result;
+*/
     }
 
     private void resetOptions () {
