@@ -18,6 +18,7 @@ public class TunnelConnectorHandler extends IoHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger (TunnelConnectorHandler.class);
     private Map<String, IoSession>  managed_tunnels;
     private Locks                   locks;
+    private TunnelMonitor           monitor;
 
     public TunnelConnectorHandler (Map<String, IoSession> managed_tunnels) {
         this.managed_tunnels = managed_tunnels;
@@ -25,6 +26,10 @@ public class TunnelConnectorHandler extends IoHandlerAdapter {
 
     public void setLocks (Locks locks) {
         this.locks = locks;
+    }
+
+    public void setTunnelMonitor (TunnelMonitor monitor) {
+        this.monitor = monitor;
     }
 
     @Override

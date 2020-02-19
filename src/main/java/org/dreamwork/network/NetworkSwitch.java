@@ -99,7 +99,6 @@ public class NetworkSwitch {
                 logger.trace ("the tunnel manager did not sets to auto-start, nothing to do");
             }
         }
-
         logger.info ("sshd server started.");
         synchronized (LOCKER) {
             LOCKER.wait ();

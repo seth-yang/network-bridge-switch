@@ -19,6 +19,8 @@ public class FrontEndHandler extends IoHandlerAdapter {
     private Map<Integer, IoSession> managedSessions;
     private Map<String, IoSession> managedTunnels;
     private Locks locks;
+    private String tunnelName;
+    private TunnelMonitor monitor;
 
     private int category;
     private boolean blocked;
@@ -29,6 +31,14 @@ public class FrontEndHandler extends IoHandlerAdapter {
         this.managedSessions  = managedSessions;
         this.category         = category;
         this.blocked          = blocked;
+    }
+
+    public void setTunnelName (String tunnelName) {
+        this.tunnelName = tunnelName;
+    }
+
+    public void setMonitor (TunnelMonitor monitor) {
+        this.monitor = monitor;
     }
 
     public void setManagedTunnels (Map<String, IoSession> managedTunnels) {
@@ -92,6 +102,7 @@ public class FrontEndHandler extends IoHandlerAdapter {
                         if (logger.isInfoEnabled ()) {
                             logger.info (">>> tunnel [{}] establishing. local = {}, peer = {}", key, session, tunnel);
                         }
+                        monitor.addTunnel (tunnelName, key, session, tunnel);
                         if (blocked) {
                             if (logger.isTraceEnabled ()) {
                                 logger.trace ("the client required me await until it disconnect");
@@ -147,6 +158,9 @@ public class FrontEndHandler extends IoHandlerAdapter {
         }
         if (peer != null) {
             peer.closeNow ();
+        }
+        if (monitor != null) {
+            monitor.removeTunnel (tunnelName, key);
         }
         session.removeAttribute ("peer");
         session.removeAttribute ("key");

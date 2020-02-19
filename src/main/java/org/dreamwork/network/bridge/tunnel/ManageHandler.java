@@ -25,12 +25,17 @@ public class ManageHandler extends IoHandlerAdapter {
     private Map<Integer, IoSession> managed_sessions = new TreeMap<> ();
     private Map<String, IoSession>  managed_tunnels;
     private Locks                   locks;
+    private TunnelMonitor           monitor;
 
     private Map<String, Client> clients = new TreeMap<> ();
 
     public ManageHandler (Map<String, IoSession>  managed_tunnels, Locks locks) {
         this.managed_tunnels  = managed_tunnels;
         this.locks            = locks;
+    }
+
+    public void setTunnelMonitor (TunnelMonitor monitor) {
+        this.monitor = monitor;
     }
 
     @Override
@@ -55,32 +60,6 @@ public class ManageHandler extends IoHandlerAdapter {
                 session.closeNow ();
                 break;
         }
-/*
-        IoBuffer buffer = (IoBuffer) message;
-        int length = buffer.limit ();
-        byte[] data = new byte[length];
-        buffer.get (data);
-        ByteArrayInputStream bais = new ByteArrayInputStream (data);
-        DataInputStream dis = new DataInputStream (bais);
-        int port = dis.readInt ();
-        boolean blocked = dis.readBoolean ();
-        String name = dis.readUTF ();
-
-        if (logger.isTraceEnabled ()) {
-            logger.trace ("receive a message: {name = {}, port = {}, blocked = {}}", name, port, blocked);
-        }
-
-        Client client = new Client (name, blocked, port);
-        clients.put (name, client);
-        session.setAttribute ("key", name);
-
-        managed_sessions.put (port, session);
-
-        FrontEndHandler feh = new FrontEndHandler (managed_sessions, port, blocked);
-        feh.setManagedTunnels (managed_tunnels);
-        feh.setLocks (locks);
-        client.acceptor = Helper.bind (port, feh);
-*/
     }
 
     @Override
@@ -96,6 +75,10 @@ public class ManageHandler extends IoHandlerAdapter {
 
                 client.acceptor.unbind ();
                 logger.info ("tunnel {} unbind from port {}", client.name, client.port);
+            }
+
+            if (monitor != null) {
+                monitor.removeManager (name);
             }
         }
     }
@@ -129,33 +112,14 @@ public class ManageHandler extends IoHandlerAdapter {
         managed_sessions.put (creation.port, session);
 
         FrontEndHandler feh = new FrontEndHandler (managed_sessions, creation.port, creation.blocked);
+        feh.setTunnelName (creation.name);
+        feh.setMonitor (monitor);
         feh.setManagedTunnels (managed_tunnels);
         feh.setLocks (locks);
         client.acceptor = Helper.bind (creation.port, feh);
 
+        monitor.addManager (creation.name, session, client.acceptor);
+
         logger.info ("tunnel manager [{}] listened on {}", creation.name, creation.port);
     }
-
-/*
-    private void bind (DataInputStream dis, IoSession session) throws IOException {
-        int port = dis.readInt ();
-        boolean blocked = dis.readBoolean ();
-        String name = dis.readUTF ();
-
-        if (logger.isTraceEnabled ()) {
-            logger.trace ("receive a message: {name = {}, port = {}, blocked = {}}", name, port, blocked);
-        }
-
-        Client client = new Client (name, blocked, port);
-        clients.put (name, client);
-        session.setAttribute ("key", name);
-
-        managed_sessions.put (port, session);
-
-        FrontEndHandler feh = new FrontEndHandler (managed_sessions, port, blocked);
-        feh.setManagedTunnels (managed_tunnels);
-        feh.setLocks (locks);
-        client.acceptor = Helper.bind (port, feh);
-    }
-*/
 }
