@@ -2,16 +2,16 @@ package org.dreamwork.network.bridge.tunnel;
 
 import org.apache.mina.core.service.IoService;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.dreamwork.concurrent.Looper;
 import org.dreamwork.config.IConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-class TunnelMonitor implements Runnable {
+class TunnelMonitor implements Runnable, ITunnelMonitor {
     private final Logger logger = LoggerFactory.getLogger (TunnelMonitor.class);
     private final Object LOCKER = new byte[0];
     private final Map<String, Client> clients = new ConcurrentHashMap<> ();
@@ -40,6 +40,7 @@ class TunnelMonitor implements Runnable {
     void addManager (String name, IoSession session, IoService service) {
         synchronized (clients) {
             Client client = new Client (name, session);
+            client.port = ((NioSocketAcceptor) service).getLocalAddress ().getPort ();
             client.service = service;
             clients.put (name, client);
         }
@@ -172,7 +173,35 @@ class TunnelMonitor implements Runnable {
         }
     }
 
+    @Override
+    public List<ClientInfo> getClientInfo () {
+        List<ClientInfo> list = new ArrayList<> ();
+        for (Client client : clients.values ()) {
+            ClientInfo info = new ClientInfo ();
+            info.name = client.name;
+            info.port = client.port;
+            info.remoteManagerAddress = client.manager.getRemoteAddress ();
+
+            if (client.tunnels != null && !client.tunnels.isEmpty ()) {
+                info.tunnels = new HashMap<> ();
+                for (Map.Entry<String, Pair> e : client.tunnels.entrySet ()) {
+                    TunnelInfo ti = new TunnelInfo ();
+                    Pair p = e.getValue ();
+                    ti.t = e.getKey ();
+                    ti.a = p.local.getRemoteAddress ().toString ();
+                    ti.z = p.peer.getRemoteAddress ().toString ();
+                    info.tunnels.put (ti.t, ti);
+                }
+            }
+
+            list.add (info);
+        }
+        list.sort (Comparator.comparingInt (o -> o.port));
+        return list;
+    }
+
     private static final class Client {
+        int port;
         String name;
         IoSession manager;
         IoService service;

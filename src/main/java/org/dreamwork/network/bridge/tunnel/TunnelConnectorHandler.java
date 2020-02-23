@@ -9,6 +9,7 @@ import org.dreamwork.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
 /**
@@ -72,9 +73,6 @@ public class TunnelConnectorHandler extends IoHandlerAdapter {
             } else if (logger.isTraceEnabled ()){
                 logger.trace ("What The Fuck!!!");
             }
-            if (logger.isTraceEnabled ()) {
-                logger.trace ("peer != null complete, but why?");
-            }
         } else {
             peer.write (message);
         }
@@ -113,9 +111,17 @@ public class TunnelConnectorHandler extends IoHandlerAdapter {
         String key = (String) session.getAttribute ("key");
         if (timestamp != null) {
             long delta = System.currentTimeMillis () - timestamp;
-            logger.trace ("session[{}] idled, last communicated was {} ms ago, status = {}", key, delta, status);
+            logger.trace ("session[{}] idled, last communicated was {} ms ago, at {}, status = {}", key, delta, new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss").format (timestamp), status);
         } else if (logger.isTraceEnabled ()) {
             logger.trace ("session[{}] idled, status = {}", key, status);
         }
+    }
+
+    @Override
+    public void exceptionCaught (IoSession session, Throwable cause) {
+        String key = (String) session.getAttribute ("key");
+        logger.warn ("an error occurred in tunnel [{}]: ", key);
+        logger.warn (cause.getMessage (), cause);
+        cause.printStackTrace ();
     }
 }
